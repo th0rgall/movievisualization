@@ -13,7 +13,8 @@ function parse(data) {
 
     let rfilter = (lines) => lines.filter((s) => reg.test(s));
 
-    // dd/mm/yy to a Date
+    // dd/mm/yy[yy] to a Date(yyyy, mm, dd)
+    // mm is indexed 0 - 11
     let toDate = (s) => {
         const match = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(s);
         if (match) {
@@ -35,8 +36,8 @@ function parse(data) {
     )
 
     //console.log(rparse(rfilter(lines)));
-    zip([lines, rparse(lines)]).forEach((c) => console.log(`${c[0]}      -->      ${c[1]}`));
-
+    //zip([lines, rparse(lines)]).forEach((c) => console.log(`${c[0]}      -->      ${c[1]}`));
     //console.log(zip([lines, lines.map((s) => reg.test(s))]));
 
+    return rparse(lines);
 }
