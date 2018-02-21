@@ -35,6 +35,29 @@ function parse(data) {
         }
     )
 
+    let lastOfLast = (acc) => {
+        const a = acc[acc.length - 1];
+        return a[a.length - 1];
+    }
+
+    let group = (arr) => arr.reduce((acc, e, i, a) => {
+        //console.log(e);
+        if (!e) {
+            return acc;
+        } else if (acc.length > 0 && e[1].getMonth() === lastOfLast(acc)[1].getMonth()) {
+            acc[acc.length - 1].push(e);
+            return acc;
+        }
+        else {
+            acc.push([e]);
+            return acc;
+        }
+    }, []);
+
+    let countInner = (arr) => arr.map((e) => e.length);
+
+    console.log(countInner(group(rparse(lines))))
+
     //console.log(rparse(rfilter(lines)));
     //zip([lines, rparse(lines)]).forEach((c) => console.log(`${c[0]}      -->      ${c[1]}`));
     //console.log(zip([lines, lines.map((s) => reg.test(s))]));
