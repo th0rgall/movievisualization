@@ -4,7 +4,10 @@ const zip = rows=>rows[0].map((_,c)=>rows.map(row=>row[c]))
 
 fs.readFile('./data.raw', 'utf8', (err, data) => {
     if (err) throw err;
-    parse(data);
+    let movies = parse(data);
+    fs.writeFile("movies.json", JSON.stringify(movies), (err) => {
+        if (err) {console.log(err)} else {console.log("Movies saved!")}
+    })
   });
 
 function parse(data) {
@@ -28,7 +31,7 @@ function parse(data) {
         (s) => {
             let matches = reg.exec(s);
             if (matches) {
-                return [matches[1], toDate(matches[3])];
+                return {title: matches[1], date: toDate(matches[3])};
             } else {
                 return null;
             }
@@ -44,7 +47,7 @@ function parse(data) {
         //console.log(e);
         if (!e) {
             return acc;
-        } else if (acc.length > 0 && e[1].getMonth() === lastOfLast(acc)[1].getMonth()) {
+        } else if (acc.length > 0 && e.date.getMonth() === lastOfLast(acc).date.getMonth()) {
             acc[acc.length - 1].push(e);
             return acc;
         }
@@ -54,13 +57,25 @@ function parse(data) {
         }
     }, []);
 
+    let sorted = (lines) => rparse(lines).filter(eval).sort((a,b) => a.date > b.date ? 1 : -1);
+
     let countInner = (arr) => arr.map((e) => e.length);
 
-    console.log(countInner(group(rparse(lines))))
+    let countToObj = (grouped) => grouped.map((group) => {
+            if (group.length) {
+                return {date: group[0].date, movies: group.map(m => m.title)};
+            } else {
+                return null;
+            }
+        })
 
-    //console.log(rparse(rfilter(lines)));
+    //console.log(countToObj(group(sorted(lines))));
+
+    
+
+    //console.log(rparse(lines).filter(eval).sort((a,b) => a.date > b.date ? 1 : -1));
     //zip([lines, rparse(lines)]).forEach((c) => console.log(`${c[0]}      -->      ${c[1]}`));
     //console.log(zip([lines, lines.map((s) => reg.test(s))]));
 
-    return rparse(lines);
+    return sorted(lines);
 }
