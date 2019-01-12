@@ -1,0 +1,53 @@
+body {
+    font-family: Helvetica Neue, Helvetica-Neue, Helvetica;
+  }
+  
+  .chart {
+    float: left;
+  }
+  
+  .button-area {
+    padding: 40px 0 0 30px;
+    float: left;
+  }
+  
+  .app-button {
+    display: block;
+    margin-bottom: 3px;
+  }
+  
+  .axis text {
+    font-size: 0.8em;
+  }
+  
+  .axis line {
+    stroke: #000;
+  }
+  
+  .axis path {
+    display: none;
+  }
+  
+  .line {
+    stroke: orange;
+    fill: none;
+    stroke-width: 3px;
+  }
+  
+  .overlay {
+    fill: none;
+    pointer-events: all;
+  }
+  
+  .tooltip {
+    position: absolute;
+    padding: 10px;
+    font: 12px sans-serif;
+    background: #222;
+    color: #fff;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0.9;
+    visibility: hidden;
+  }
