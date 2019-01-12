@@ -89,14 +89,14 @@ export default function display2(data) {
     .on('mouseover', function(d) {
         // focus.attr("transform", "translate(" + x(formatDate.parse(tar_date)) + ","+y(tar_value)+ ")");
         //focus.attr("transform", "translate(" + x(d.week) + "," + height - y(d.weekCount)+ ")");
-        tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.films.join(', ')}`)
+        tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.films.map(f => f.title).join(', ')}`)
         .style("visibility", "visible")
         // .style("top", d3.mouse(this)[1] - (tooltip[0][0].clientHeight - 30) + "px")
         // .style("left", d3.mouse(this)[0] - (tooltip[0][0].clientWidth / 2.0) + "px");
         .style("top", d3.mouse(document.querySelector('body'))[1] + "px")
         .style("left", d3.mouse(document.querySelector('body'))[0] + "px");
 
-        d3.select(this).style("fill", "rgb(255,0,0)");
+        d3.select(this).style("fill", "rgb(255,255,0)");
     })
     .on('mouseout', function(d) {
         d3.select(this).style("fill", "steelblue");
