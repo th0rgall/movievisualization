@@ -2,7 +2,7 @@ fs = require('fs')
 
 const zip = rows=>rows[0].map((_,c)=>rows.map(row=>row[c]))
 
-fs.readFile('./data.raw', 'utf8', (err, data) => {
+fs.readFile(process.argv.length > 2 ? process.argv[2] : './data.raw', 'utf8', (err, data) => {
     if (err) throw err;
     let movies = parse(data);
     fs.writeFile("movies.json", JSON.stringify(movies), (err) => {
@@ -31,9 +31,10 @@ function parse(data) {
         (s) => {
             let matches = reg.exec(s);
             if (matches) {
-                return {title: matches[1], date: toDate(matches[3])};
+                return {title: matches[1], date: toDate(matches[3]), original: s};
             } else {
-                return null;
+                console.log(s);
+                return {title: "", date: undefined, original: s};
             }
         }
     )
@@ -57,7 +58,7 @@ function parse(data) {
         }
     }, []);
 
-    let sorted = (lines) => rparse(lines).filter(eval).sort((a,b) => a.date > b.date ? 1 : -1);
+    let sorted = (lines) => rparse(lines).filter(eval).sort((a,b) => a.date && b.date && a.date > b.date ? 1 : -1);
 
     let countInner = (arr) => arr.map((e) => e.length);
 
@@ -77,5 +78,23 @@ function parse(data) {
     //zip([lines, rparse(lines)]).forEach((c) => console.log(`${c[0]}      -->      ${c[1]}`));
     //console.log(zip([lines, lines.map((s) => reg.test(s))]));
 
-    return sorted(lines);
+    var Airtable = require('airtable');
+    var base = new Airtable({apiKey: 'keyAGn5GfzATd0XOP'}).base('appLTEluHlM4eYHxh');
+    
+    const out = sorted(lines);
+
+    out.forEach(el => {
+        base('Table 1').create({
+            "Title": el.title,
+            // "Type": "Film",
+            "Original string": el.original,
+            // "From year": "2013",
+            "Watched date": el.date
+          }, function(err, record) {
+              if (err) { console.error(err); return; }
+              console.log(record.getId());
+          });
+    });
+
+    return out;
 }
