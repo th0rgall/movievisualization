@@ -13,7 +13,7 @@ const outObj = movies
                 .filter(e => e.Title && e.Date && e.Type && e.Type == "Film")
                 .map(e => {
                     let mObj = {};
-                    let date = new Date(Date.parse(e.Date));
+                    let date = new Date(Date.parse(e.Date)).toISOString();
                     if (date) {
                         mObj.date = date; 
                     } else {
