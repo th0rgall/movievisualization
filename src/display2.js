@@ -8,7 +8,7 @@ export default function display2(data) {
             let mapfilm =  (f, fi, fa) => {
                 f.weekCount = c.weekCount;
                 f.week = c.week;
-                f.filmCount = fa.indexOf(f);
+                f.filmCount = fa.indexOf(f) + 1;
                 return f;
             };
 
@@ -22,8 +22,8 @@ export default function display2(data) {
 
     let individualData = toIndividualData(data);
     
-    var margin = {top: 20, right: 20, bottom: 70, left: 40},
-    width = 6000 - margin.left - margin.right;
+    var margin = {top: 400, right: 20, bottom: 70, left: 40},
+    width = 12000 - margin.left - margin.right;
 
     // var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
     var x = d3.scaleBand().domain(data.map(function(d) { return d.week; }))
@@ -31,7 +31,7 @@ export default function display2(data) {
 
     let posterRatio = 1.48;
     let maxFilmCount = d3.max(individualData.map(f => f.filmCount));
-    let height = (x.bandwidth()) * posterRatio * maxFilmCount + margin.top + margin.bottom;
+    let height = (x.bandwidth()) * posterRatio * maxFilmCount ;//+ margin.top + margin.bottom;
 
    // height = 400 - margin.top - margin.bottom;
 
@@ -67,6 +67,8 @@ export default function display2(data) {
     //y.domain([0, d3.max(data, function(d) { return d.weekCount; })]);
     y.domain(enumToMax(maxFilmCount))
 
+    let textColor = "#fff";
+
     let mouseG = svg.append("g");
     mouseG
     .attr("class", "x axis")
@@ -76,6 +78,7 @@ export default function display2(data) {
     .style("text-anchor", "end")
     .attr("dx", "-.8em")
     .attr("dy", "-.55em")
+    .attr("fill", textColor)
     .attr("transform", "rotate(-90)" );
 
     svg.append("g")
@@ -86,6 +89,7 @@ export default function display2(data) {
     .attr("y", 6)
     .attr("dy", ".71em")
     .style("text-anchor", "end")
+    .attr("fill", textColor)
     .text("Value ($)");
 
     ///////////////////////
@@ -107,14 +111,15 @@ export default function display2(data) {
 
     focus.append("text")
     .attr("x", 9)
-    .attr("dy", ".35em");
+    .attr("dy", ".35em")
+    .attr("fill", textColor);
 
     let bars = svg.selectAll("bar")
     //.data(data)
     .data(individualData.filter(d => d.filmCount ? true : null))
     .enter();
     
-    bars.append(d => d.imgUrl ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
+    bars.append(d => d.imgUrl && d.imgUrl.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
     //.style("fill", "steelblue")
     .attr("x", function(d) { return x(d.week); })

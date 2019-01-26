@@ -41,7 +41,7 @@ d3.json("movies.json", (data) => {
     d3.json("posterUrls.json", (urls) => {
 
         data = data.map(m => {m.date = new Date(m.date); return m}).sort((a,b) => a.date - b.date);
-        display(data);
+        //display(data);
 
         display2(weeklyData(mergeUrls(data, urls)));
     });
