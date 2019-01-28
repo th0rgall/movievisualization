@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-export default function display2(data) {
+export default function display2(weeklyData) {
 
     let toIndividualData = (weeklydata) => {
         return weeklydata.reduce((acc, c, i, arr) => {
@@ -20,18 +20,22 @@ export default function display2(data) {
         }, []);
     };
 
-    let individualData = toIndividualData(data);
+    let individualData = toIndividualData(weeklyData);
     
-    var margin = {top: 400, right: 20, bottom: 70, left: 40},
-    width = 12000 - margin.left - margin.right;
-
+    const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
+    const innerPadding = 0.30;
+    const tileWidth = 52;
+    const width = (tileWidth * ( 1 + innerPadding)) * weeklyData.length;
+    
     // var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
-    var x = d3.scaleBand().domain(data.map(function(d) { return d.week; }))
-    .range([0, width]).paddingInner(0.15);
+    var x = d3.scaleBand().domain(weeklyData.map(function(d) { return d.week; }))
+    .range([0, width]).paddingInner(innerPadding);
 
-    let posterRatio = 1.48;
+    const posterRatio = 1.48; // average ratio...
+    const tileHeight = tileWidth * posterRatio;
+    const verticalPadding = tileWidth * innerPadding; 
     let maxFilmCount = d3.max(individualData.map(f => f.filmCount));
-    let height = (x.bandwidth()) * posterRatio * maxFilmCount ;//+ margin.top + margin.bottom;
+    let height = tileHeight * maxFilmCount + verticalPadding * (maxFilmCount - 1);
 
    // height = 400 - margin.top - margin.bottom;
 
@@ -45,11 +49,29 @@ export default function display2(data) {
     let enumToMax = m => {let a = []; for (let i = 1; i <= m; i++) {a[i-1] = i} return a};
     var y = d3.scaleBand().rangeRound([height, 0]).paddingInner(0.1);
 
-    var xAxis = d3.axisBottom(x)
-    .tickFormat(d3.timeFormat("%Y-%m"));
+    // yearAxis
+    var yearAxis = d3.axisBottom(x);
+    yearAxis.tickFormat(d3.timeFormat("%Y"));
+    yearAxis.tickValues(x.domain().filter(function(d,i,a) {
+        // TODO: maybe some unattended edge cases here
+        if (d.getMonth() === 0) {
+            // can look back
+            if (i > 0) {
+                if (a[i-1].getMonth() === 11) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }));
 
-    var yAxis = d3.axisLeft(y)
-    .ticks(10);
+    // monthAxis
+    var monthAxis = d3.axisBottom(x);
+    monthAxis.tickFormat(d3.timeFormat("%B"));
+    monthAxis.tickValues(x.domain().filter((d,i,a) => d.getDate() === 1));
+    
+    var yAxis = d3.axisLeft(y);
+    
 
     var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -73,13 +95,25 @@ export default function display2(data) {
     mouseG
     .attr("class", "x axis")
     .attr("transform", "translate(0," + height + ")")
-    .call(xAxis)
+    .call(yearAxis)
     .selectAll("text")
     .style("text-anchor", "end")
     .attr("dx", "-.8em")
-    .attr("dy", "-.55em")
+    .attr("dy", "100")
     .attr("fill", textColor)
-    .attr("transform", "rotate(-90)" );
+    //.attr("transform", "rotate(-90)" );
+
+    let monthTicks = svg.append("g");
+    monthTicks
+    .attr("class", "x axis__month-ticks")
+    .attr("transform", "translate(0," + height + ")")
+    .call(monthAxis)
+    .selectAll("text")
+    .style("text-anchor", "end")
+    .attr("dx", "-.8em")
+    .attr("dy", "32")
+    .attr("fill", textColor)
+    //.attr("transform", "rotate(-90)" );
 
     svg.append("g")
     .attr("class", "y axis")
@@ -118,10 +152,13 @@ export default function display2(data) {
     //.data(data)
     .data(individualData.filter(d => d.filmCount ? true : null))
     .enter();
-    
+
+    const highlightClass = "movieTile--highlighted";
+
     bars.append(d => d.imgUrl && d.imgUrl.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
     //.style("fill", "steelblue")
+    .attr("class", "movieTile")
     .attr("x", function(d) { return x(d.week); })
     .attr("width", x.bandwidth())
     .attr("y", function(d) { return y(d.filmCount); })
@@ -133,8 +170,8 @@ export default function display2(data) {
         //focus.attr("transform", "translate(" + x(d.week) + "," + height - y(d.weekCount)+ ")");
         let ttoffsetx = 0;
         let ttoffsety = -100;
+        this.classList.toggle(highlightClass);
 
-        this.classList.toggle('highlighted');
         tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.title}`)
         .style("visibility", "visible")
         // .style("top", d3.mouse(this)[1] - (tooltip[0][0].clientHeight - 30) + "px")
@@ -147,6 +184,6 @@ export default function display2(data) {
     })
     .on('mouseout', function(d) {
         //d3.select(this).style("fill", "steelblue");
-        this.classList.toggle('highlighted');
+        this.classList.toggle(highlightClass);
     })
 }

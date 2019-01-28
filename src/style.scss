@@ -1,6 +1,6 @@
 body {
     font-family: Helvetica Neue, Helvetica-Neue, Helvetica;
-    background-color: #000;
+    background-color: #1D1E1F;
   }
   
   .chart {
@@ -18,8 +18,12 @@ body {
   }
   
   .axis text {
-    font-size: 0.8em;
+    font-size: 100px;
     color: #fff;
+  }
+
+  .axis .axis__month-ticks {
+    font-size: 26px;
   }
   
   .axis line {
@@ -55,7 +59,11 @@ body {
     width: 200px;
   }
 
-  .highlighted {
-    filter: drop-shadow( 0px 0px 10px rgba(255, 0, 0, 0.7));
+  .movieTile {
     transition: 0.3s filter linear;
+    filter: drop-shadow( 0 6px 9px 0 rgba(0,0,0,0.50));
+  }
+
+  .movieTile--highlighted {
+    filter: drop-shadow( 0px 0px 10px rgba(255, 0, 0, 0.7));
   }
