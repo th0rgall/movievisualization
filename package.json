@@ -5,7 +5,8 @@
   "main": "display.js",
   "scripts": {
     "start": "npx webpack-dev-server --open",
-    "watch": "npx webpack --watch"
+    "watch": "npx webpack --watch",
+    "prepare": "./scripts/prepare.sh"
   },
   "author": "",
   "license": "ISC",

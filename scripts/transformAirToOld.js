@@ -6,7 +6,7 @@ let fpath = '';
 if (process.argv.length > 1) {
     fpath = path.resolve(process.argv[2]);
 }
-const moviesFile = fs.readFileSync(fpath ? fpath : 'dist/movies.json', 'utf8');
+const moviesFile = fs.readFileSync(fpath ? fpath : 'data/moviesRaw.json', 'utf8');
 const movies = JSON.parse(moviesFile);
 
 const outObj = movies
@@ -24,5 +24,5 @@ const outObj = movies
                 })
                 .filter(o => !!o.date);
 
-fs.writeFileSync('movies.json', JSON.stringify(outObj), {encoding: 'utf8'});
+fs.writeFileSync('dist/movies.json', JSON.stringify(outObj), {encoding: 'utf8'});
 
