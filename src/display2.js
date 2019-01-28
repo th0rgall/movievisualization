@@ -68,12 +68,20 @@ export default function display2(weeklyData) {
     // monthAxis
     var monthAxis = d3.axisBottom(x);
     monthAxis.tickFormat(d3.timeFormat("%B"));
-    monthAxis.tickValues(x.domain().filter((d,i,a) => d.getDate() === 1));
+    monthAxis.tickValues(x.domain().filter((d,i,a) => {
+        if (i > 0) {
+            if (a[i-1].getMonth() !== d.getMonth()) {
+                return true;
+            }
+        }
+        return false;
+    }));
     
     var yAxis = d3.axisLeft(y);
     
 
     var svg = d3.select("body").append("svg")
+    .attr("class", "movie-svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
@@ -91,40 +99,49 @@ export default function display2(weeklyData) {
 
     let textColor = "#fff";
 
-    let mouseG = svg.append("g");
-    mouseG
-    .attr("class", "x axis")
+    let yearTicks = svg.append("g");
+    yearTicks
+    .attr("class", "x axis axis--year")
     .attr("transform", "translate(0," + height + ")")
     .call(yearAxis)
     .selectAll("text")
-    .style("text-anchor", "end")
-    .attr("dx", "-.8em")
+    .attr("class", "axis__year-ticks")
+    .style("text-anchor", "start")
+    .attr("dx", "-60")
     .attr("dy", "100")
     .attr("fill", textColor)
     //.attr("transform", "rotate(-90)" );
 
+    d3.select(".axis--year .domain")
+    .attr("transform", `translate(0, ${verticalPadding})`);
+
     let monthTicks = svg.append("g");
     monthTicks
-    .attr("class", "x axis__month-ticks")
+    .attr("class", "x axis axis--month")
     .attr("transform", "translate(0," + height + ")")
     .call(monthAxis)
     .selectAll("text")
-    .style("text-anchor", "end")
-    .attr("dx", "-.8em")
-    .attr("dy", "32")
+    .attr("class", "axis__month-ticks")
+    .style("text-anchor", "start")
+    .attr("dx", "-23")
+    .attr("dy", "65")
     .attr("fill", textColor)
     //.attr("transform", "rotate(-90)" );
 
-    svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis)
-    .append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 6)
-    .attr("dy", ".71em")
-    .style("text-anchor", "end")
-    .attr("fill", textColor)
-    .text("Value ($)");
+    monthTicks
+    .selectAll(".axis--month line")
+    .attr("transform", "translate(-23, 10)");
+
+    // svg.append("g")
+    // .attr("class", "y axis")
+    // .call(yAxis)
+    // .append("text")
+    // .attr("transform", "rotate(-90)")
+    // .attr("y", 6)
+    // .attr("dy", ".71em")
+    // .style("text-anchor", "end")
+    // .attr("fill", textColor)
+    // .text("Value ($)");
 
     ///////////////////////
     // Tooltips

@@ -1,6 +1,15 @@
+html {
+  height: 100%;
+}
+
 body {
     font-family: Helvetica Neue, Helvetica-Neue, Helvetica;
     background-color: #1D1E1F;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    margin: 0;
   }
   
   .chart {
@@ -18,20 +27,37 @@ body {
   }
   
   .axis text {
-    font-size: 100px;
     color: #fff;
+  }
+
+  .axis .axis__year-ticks {
+    font-size: 100px;
+    font-weight: 600;
+    fill: #6C0000;
   }
 
   .axis .axis__month-ticks {
     font-size: 26px;
+    font-weight: 300;
   }
   
-  .axis line {
-    stroke: rgb(206, 20, 20);
-  }
-  
-  .axis path {
+  .axis.axis--month .domain {
     display: none;
+  }
+
+  .axis--year .tick line {
+    display: none;
+  }
+
+  $dimmed: #D8D8D8;
+
+  // selects the horizontal axis <path> element
+  .axis--year .domain {
+    stroke: $dimmed;
+  }
+
+  .axis--month line {
+    stroke: $dimmed;
   }
   
   .line {
@@ -61,7 +87,8 @@ body {
 
   .movieTile {
     transition: 0.3s filter linear;
-    filter: drop-shadow( 0 6px 9px 0 rgba(0,0,0,0.50));
+    filter: drop-shadow( 0 6px 9px rgba(0,0,0,0.50));
+    overflow: visible;
   }
 
   .movieTile--highlighted {
