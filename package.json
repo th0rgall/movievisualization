@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx webpack-dev-server --open",
     "watch": "npx webpack --watch",
-    "prepare": "./scripts/prepare.sh"
+    "parsedata": "./scripts/prepare.sh"
   },
   "author": "",
   "license": "ISC",
