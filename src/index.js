@@ -10,6 +10,9 @@ function weeklyData(data) {
     let weeklyData = weeks.reduce((acc, cur, i, arr) => {
         let weekCount = 0;
         let films = [];
+        // TODO: find better grouper, the weeks start at the sunday 12pm of monday night
+        // while I expect them to end at the next sunday night? So everything shifted?
+        // ==> adjust weeks extent above to generate end dates 
         while ( i < arr.length - 1 && di < data.length && data[di].date < arr[i + 1]) {
             weekCount++;
             films = [...films, data[di]];
@@ -41,7 +44,7 @@ d3.json("movies.json", (data) => {
     d3.json("posterUrls.json", (urls) => {
 
         data = data.map(m => {m.date = new Date(m.date); return m}).sort((a,b) => a.date - b.date);
-        display(data);
+        //display(data);
 
         display2(weeklyData(mergeUrls(data, urls)));
     });

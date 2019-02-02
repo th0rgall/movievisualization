@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-export default function display2(data) {
+export default function display2(weeklyData) {
 
     let toIndividualData = (weeklydata) => {
         return weeklydata.reduce((acc, c, i, arr) => {
@@ -8,30 +8,34 @@ export default function display2(data) {
             let mapfilm =  (f, fi, fa) => {
                 f.weekCount = c.weekCount;
                 f.week = c.week;
-                f.filmCount = fa.indexOf(f);
+                f.filmCount = fa.indexOf(f) + 1;
                 return f;
             };
 
             if (c.films && c.films.length > 0) {
-                return [].concat(acc, c.films.map(mapfilm));
+                return Array.concat(acc, c.films.map(mapfilm));
             } else {
                 return acc;
             }
         }, []);
     };
 
-    let individualData = toIndividualData(data);
+    let individualData = toIndividualData(weeklyData);
     
-    var margin = {top: 20, right: 20, bottom: 70, left: 40},
-    width = 6000 - margin.left - margin.right;
-
+    const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
+    const innerPadding = 0.30;
+    const tileWidth = 52;
+    const width = (tileWidth * ( 1 + innerPadding)) * weeklyData.length;
+    
     // var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
-    var x = d3.scaleBand().domain(data.map(function(d) { return d.week; }))
-    .range([0, width]).paddingInner(0.15);
+    var x = d3.scaleBand().domain(weeklyData.map(function(d) { return d.week; }))
+    .range([0, width]).paddingInner(innerPadding);
 
-    let posterRatio = 1.48;
+    const posterRatio = 1.48; // average ratio...
+    const tileHeight = tileWidth * posterRatio;
+    const verticalPadding = tileWidth * innerPadding; 
     let maxFilmCount = d3.max(individualData.map(f => f.filmCount));
-    let height = (x.bandwidth()) * posterRatio * maxFilmCount + margin.top + margin.bottom;
+    let height = tileHeight * maxFilmCount + verticalPadding * (maxFilmCount - 1);
 
    // height = 400 - margin.top - margin.bottom;
 
@@ -45,13 +49,39 @@ export default function display2(data) {
     let enumToMax = m => {let a = []; for (let i = 1; i <= m; i++) {a[i-1] = i} return a};
     var y = d3.scaleBand().rangeRound([height, 0]).paddingInner(0.1);
 
-    var xAxis = d3.axisBottom(x)
-    .tickFormat(d3.timeFormat("%Y-%m"));
+    // yearAxis
+    var yearAxis = d3.axisBottom(x);
+    yearAxis.tickFormat(d3.timeFormat("%Y"));
+    yearAxis.tickValues(x.domain().filter(function(d,i,a) {
+        // TODO: maybe some unattended edge cases here
+        if (d.getMonth() === 0) {
+            // can look back
+            if (i > 0) {
+                if (a[i-1].getMonth() === 11) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }));
 
-    var yAxis = d3.axisLeft(y)
-    .ticks(10);
+    // monthAxis
+    var monthAxis = d3.axisBottom(x);
+    monthAxis.tickFormat(d3.timeFormat("%B"));
+    monthAxis.tickValues(x.domain().filter((d,i,a) => {
+        if (i > 0) {
+            if (a[i-1].getMonth() !== d.getMonth()) {
+                return true;
+            }
+        }
+        return false;
+    }));
+    
+    var yAxis = d3.axisLeft(y);
+    
 
     var svg = d3.select("body").append("svg")
+    .attr("class", "movie-svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
@@ -67,26 +97,51 @@ export default function display2(data) {
     //y.domain([0, d3.max(data, function(d) { return d.weekCount; })]);
     y.domain(enumToMax(maxFilmCount))
 
-    let mouseG = svg.append("g");
-    mouseG
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis)
-    .selectAll("text")
-    .style("text-anchor", "end")
-    .attr("dx", "-.8em")
-    .attr("dy", "-.55em")
-    .attr("transform", "rotate(-90)" );
+    let textColor = "#fff";
 
-    svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis)
-    .append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 6)
-    .attr("dy", ".71em")
-    .style("text-anchor", "end")
-    .text("Value ($)");
+    let yearTicks = svg.append("g");
+    yearTicks
+    .attr("class", "x axis axis--year")
+    .attr("transform", "translate(0," + height + ")")
+    .call(yearAxis)
+    .selectAll("text")
+    .attr("class", "axis__year-ticks")
+    .style("text-anchor", "start")
+    .attr("dx", "-60")
+    .attr("dy", "100")
+    .attr("fill", textColor)
+    //.attr("transform", "rotate(-90)" );
+
+    d3.select(".axis--year .domain")
+    .attr("transform", `translate(0, ${verticalPadding})`);
+
+    let monthTicks = svg.append("g");
+    monthTicks
+    .attr("class", "x axis axis--month")
+    .attr("transform", "translate(0," + height + ")")
+    .call(monthAxis)
+    .selectAll("text")
+    .attr("class", "axis__month-ticks")
+    .style("text-anchor", "start")
+    .attr("dx", "-23")
+    .attr("dy", "65")
+    .attr("fill", textColor)
+    //.attr("transform", "rotate(-90)" );
+
+    monthTicks
+    .selectAll(".axis--month line")
+    .attr("transform", "translate(-23, 10)");
+
+    // svg.append("g")
+    // .attr("class", "y axis")
+    // .call(yAxis)
+    // .append("text")
+    // .attr("transform", "rotate(-90)")
+    // .attr("y", 6)
+    // .attr("dy", ".71em")
+    // .style("text-anchor", "end")
+    // .attr("fill", textColor)
+    // .text("Value ($)");
 
     ///////////////////////
     // Tooltips
@@ -107,16 +162,36 @@ export default function display2(data) {
 
     focus.append("text")
     .attr("x", 9)
-    .attr("dy", ".35em");
+    .attr("dy", ".35em")
+    .attr("fill", textColor);
+
+    // DETAILS
+    //
+    //
+
+    var details = d3.select("body").append("div").attr("class", "details side");
+    var detailsTop = details.append("div").attr("class", "details__top");
+    detailsTop.append("img").attr("class", "details__img");
+    var detailsProps = detailsTop.append("div").attr("class", "details__props");
+    detailsProps.append("h2").attr("class", "details__props__title");
+    detailsProps.append("p").attr("class", "details__props__facts");
+    var detailsBottom = details.append("div").attr("class", "details__bottom");
+
+    // BARS
+    //
+    //
 
     let bars = svg.selectAll("bar")
     //.data(data)
     .data(individualData.filter(d => d.filmCount ? true : null))
     .enter();
-    
-    bars.append(d => d.imgUrl ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
+
+    const highlightClass = "movieTile--highlighted";
+
+    bars.append(d => d.imgUrl && d.imgUrl.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
     //.style("fill", "steelblue")
+    .attr("class", "movieTile")
     .attr("x", function(d) { return x(d.week); })
     .attr("width", x.bandwidth())
     .attr("y", function(d) { return y(d.filmCount); })
@@ -126,16 +201,26 @@ export default function display2(data) {
     .on('mouseover', function(d) {
         // focus.attr("transform", "translate(" + x(formatDate.parse(tar_date)) + ","+y(tar_value)+ ")");
         //focus.attr("transform", "translate(" + x(d.week) + "," + height - y(d.weekCount)+ ")");
+        let ttoffsetx = 0;
+        let ttoffsety = -100;
+        this.classList.toggle(highlightClass);
+
         tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.title}`)
         .style("visibility", "visible")
         // .style("top", d3.mouse(this)[1] - (tooltip[0][0].clientHeight - 30) + "px")
         // .style("left", d3.mouse(this)[0] - (tooltip[0][0].clientWidth / 2.0) + "px");
-        .style("top", d3.mouse(document.querySelector('body'))[1] + "px")
-        .style("left", d3.mouse(document.querySelector('body'))[0] + "px");
+
+        .style("top", d3.mouse(document.querySelector('body'))[1] + ttoffsety + "px")
+        .style("left", d3.mouse(document.querySelector('body'))[0] + ttoffsetx + "px");
 
         //d3.select(this).style("fill", "rgb(255,255,0)");
     })
     .on('mouseout', function(d) {
         //d3.select(this).style("fill", "steelblue");
+        this.classList.toggle(highlightClass);
+    })
+    .on('click', (d) => {
+        d3.select(".details__img").attr("src", d.imgUrl);
+        d3.select(".details__props__title").text(d.title);
     })
 }
