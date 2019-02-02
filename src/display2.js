@@ -13,7 +13,7 @@ export default function display2(weeklyData) {
             };
 
             if (c.films && c.films.length > 0) {
-                return [].concat(acc, c.films.map(mapfilm));
+                return Array.concat(acc, c.films.map(mapfilm));
             } else {
                 return acc;
             }
@@ -165,6 +165,22 @@ export default function display2(weeklyData) {
     .attr("dy", ".35em")
     .attr("fill", textColor);
 
+    // DETAILS
+    //
+    //
+
+    var details = d3.select("body").append("div").attr("class", "details side");
+    var detailsTop = details.append("div").attr("class", "details__top");
+    detailsTop.append("img").attr("class", "details__img");
+    var detailsProps = detailsTop.append("div").attr("class", "details__props");
+    detailsProps.append("h2").attr("class", "details__props__title");
+    detailsProps.append("p").attr("class", "details__props__facts");
+    var detailsBottom = details.append("div").attr("class", "details__bottom");
+
+    // BARS
+    //
+    //
+
     let bars = svg.selectAll("bar")
     //.data(data)
     .data(individualData.filter(d => d.filmCount ? true : null))
@@ -202,5 +218,9 @@ export default function display2(weeklyData) {
     .on('mouseout', function(d) {
         //d3.select(this).style("fill", "steelblue");
         this.classList.toggle(highlightClass);
+    })
+    .on('click', (d) => {
+        d3.select(".details__img").attr("src", d.imgUrl);
+        d3.select(".details__props__title").text(d.title);
     })
 }
