@@ -2,6 +2,14 @@ const path = require('path');
 
   module.exports = {
     mode: 'development',
+    target: 'web',
+    node: {
+      fs: 'empty',
+      //canvas: false
+    },
+    externals: {
+      canvas: 'canvas'
+    },
     entry: './src/index.js',
     output: {
       filename: 'bundle.js',
