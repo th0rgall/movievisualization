@@ -1,4 +1,6 @@
 import * as d3 from 'd3';
+const ColorThief = require('color-thief');
+const colorThief = new ColorThief();
 
 export default function display2(weeklyData) {
 
@@ -13,7 +15,7 @@ export default function display2(weeklyData) {
             };
 
             if (c.films && c.films.length > 0) {
-                return Array.concat(acc, c.films.map(mapfilm));
+                return [].concat(acc, c.films.map(mapfilm));
             } else {
                 return acc;
             }
@@ -222,5 +224,17 @@ export default function display2(weeklyData) {
     .on('click', (d) => {
         d3.select(".details__img").attr("src", d.imgUrl);
         d3.select(".details__props__title").text(d.title);
+        
+        let colors = null;
+        // 
+        colors = colorThief.getColor(document.querySelector('.details__img'));
+        setTimeout(() => {colors = colorThief.getColor(document.querySelector('.details__img'))
+        console.log(colors);
+    
+        if (colors) {
+            d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${colors.join(',')}), #000 90%)`);
+        }
+    }, 20);
+ 
     })
 }
