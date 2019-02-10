@@ -1,8 +1,9 @@
 const request = require('request-promise');
 const querystring = require('querystring');
+const creds = require('./credentials.json');
 
 const params = {
-    apikey: '5ad91e18',
+    apikey: creds.omdbKey,
 };
 
 /**

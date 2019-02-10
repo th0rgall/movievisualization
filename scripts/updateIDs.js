@@ -1,13 +1,14 @@
 
 const omdb = require('./movieAPI.js');
+const creds = require('./credentials.json');
 
 // get all record airtable ids
 let airrecords = [];
 
 var Airtable = require('airtable');
-var base = new Airtable({apiKey: 'keyAGn5GfzATd0XOP'}).base('appLTEluHlM4eYHxh');
+var base = new Airtable({apiKey: creds.airtableKey}).base(creds.airtableBase);
 
-base('List').select({
+base(creds.airtableBaseName).select({
     // Selecting the first 3 records in Grid view:
     // maxRecords: 3,
     view: "Grid view"
@@ -42,7 +43,7 @@ function updateIDs() {
         if (!record.imdbID) {
             omdb.search(record.title)
             .then(({searchTerm, data}) => 
-                base('List').update(record.id, {
+                base(creds.airtableBaseName).update(record.id, {
                     "imdbID": data.imdbID
                 })
             )
@@ -50,21 +51,3 @@ function updateIDs() {
         }
     })
 }
-
-
-/* Old function made to batch-upload id's to airtable from omdb data*/ 
-
-// function updateIDs() {
-//     movies.forEach(m => {
-//         // TODO: add test step, don't update if existing
-//         let f = airrecords.find(a => a.title == m.title);
-//         if (f) {
-//             base('List').update(f.id, {
-//                 "imdbID": m.rest.imdbID
-//               }, function(err, record) {
-//                   if (err) { console.error(err); return; }
-//                   console.log(`${record.get('Title')} UPDATED`);
-//               });
-//         }
-//     });
-// }
