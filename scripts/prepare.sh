@@ -1,3 +1,3 @@
-csvtojson data/data.csv > data/moviesRaw.json \
-&& node scripts/transformAirToOld.js data/moviesRaw.json \
-&& node scripts/airDownloadPosters.js data/moviesRaw.json;
+csvtojson data/data.csv > data/movies-airtable.json \
+&& node scripts/updateIDs.js \
+&& node scripts/downloadData.js;
