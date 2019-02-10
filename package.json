@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "airtable": "^0.5.8",
+    "lodash.zip": "^4.2.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
     "sass-loader": "^7.1.0",

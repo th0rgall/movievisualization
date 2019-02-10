@@ -14,15 +14,15 @@ if (process.argv.length > 2) {
 let moviesFile = fs.readFileSync(fpath ? fpath : defaultPath, 'utf8');
 const moviesAirtable = JSON.parse(moviesFile);
 
-const requests = moviesAirtable.filter(e => 
+const moviesAirtableFiltered = moviesAirtable.filter(e => 
     e.Title && 
     e.Date && 
     e.Type && e.Type == 'Film' &&
     e.imdbID
    )
-   .map(airMovie => omdb.getMovie(airMovie.imdbID));
 
 // download data
+const requests = moviesAirtableFiltered.map(airMovie => omdb.getMovie(airMovie.imdbID));
 Promise.all(requests
             // handle possible errors (Promise.all fails with one error)
             .map(promise => 
@@ -34,7 +34,12 @@ Promise.all(requests
         // filter out errored movies
         const filtered = apiMovies.filter(Boolean);
         const countB = filtered.length;
-        fs.writeFile(defaultOut, JSON.stringify(filtered), {encoding: 'utf8'}, 
+        const combined = zip(moviesAirtableFiltered, apiMovies)
+            // pure wizard object destructuring
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+            .map(([{"Date": airDate, "Title": airTitle}, omdbData]) => (
+                {"watchedDate": airDate, "Title": omdbData ? omdbData.Title : airTitle, ...omdbData}));
+        fs.writeFile(defaultOut, JSON.stringify(combined), {encoding: 'utf8'}, 
             err => console.log(err ? err : `omdb data downloaded for ${countB} of ${countA} movies.`)
         );
 });
