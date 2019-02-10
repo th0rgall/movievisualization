@@ -28,7 +28,7 @@ exports.getMovie = function(imdbID) {
     return request(`http://www.omdbapi.com/?${querystring.stringify({i: imdbID, ...params})}`, {json: true})
     .then( result => {
         if (result.Response === "False") {
-            console.log(`Item '${imdbID}}' not found, error '${result.Error}'`);
+            console.log(`Item '${imdbID}' not found, error '${result.Error}'`);
             throw Error(result.Error);
         } else if (result.Response === "True") {
             return result;
