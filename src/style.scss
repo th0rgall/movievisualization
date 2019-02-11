@@ -15,25 +15,51 @@ body {
     margin: 0;
   }
 
+  .details__content.fading-out {
+    opacity: 0;
+    transition: opacity 350ms;
+  }
+
   .details {
     border: 1px solid $dimmed;
     background-color: #000;
     padding: 25px;
 
+    &__top {
+      display: flex;
+      flex-direction: row;
+    }
+
     &__img {
       width: 140px;
+      object-fit: contain;
+      object-position: left top;
     }
   
+    $element-margin: 18px;
     &__props {
+      flex: 1 100; //1 grow 100 shrink
+      // 1 grow gives it some basis
       color: #fff;
+      margin: 0 0 0 $element-margin;
+      max-height: 210px;
+      overflow: scroll;
 
       &__title {
         font-weight: 400;
-        font-size: 36pt;
+        font-size: 36px;
+        margin: 0 0 4px 0;
       }
     }
 
+    &__bottom {
+      color: #fff;
+    }
 
+    &__plot {
+      line-height: 1.5em;
+      margin: $element-margin 0;
+    }
 
   }
 
@@ -120,8 +146,11 @@ body {
     transition: 0.3s filter linear;
     filter: drop-shadow( 0 6px 9px rgba(0,0,0,0.50));
     overflow: visible;
+
+    &--highlighted {
+      filter: drop-shadow( 0px 0px 10px rgba(255, 0, 0, 0.7));
+    }
+
   }
 
-  .movieTile--highlighted {
-    filter: drop-shadow( 0px 0px 10px rgba(255, 0, 0, 0.7));
-  }
+  

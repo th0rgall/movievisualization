@@ -1,3 +1,5 @@
+/* Uses omdb to download additional metadata for entries defined in a airtable-exported movie json.
+ */
 const omdb = require('./movieAPI.js');
 const path = require('path');
 const fs = require('fs');
