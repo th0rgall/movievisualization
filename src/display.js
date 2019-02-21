@@ -165,8 +165,9 @@ export default function display(weeklyData) {
     //
     //
 
-    var details = d3.select("body").append("div").attr("class", "details side").html(`
+    var details = d3.select("body").append("div").attr("class", "details side details--hidden").html(`
         <div class="details__content">
+            <div class="details__close"></div>
             <div class="details__top">
                 <img class="details__img"/>
                 <div class="details__props">
@@ -181,6 +182,17 @@ export default function display(weeklyData) {
             </div>
         </div>
     `);
+
+    document.querySelector(".details__close").addEventListener("click", toggleOverlay);
+
+    function toggleOverlay() {
+        const details = d3.select(".details");
+        details.classed("details--hidden", !details.classed("details--hidden"));
+    }
+
+    function openOverlay() {
+        d3.select(".details").classed("details--hidden", false);
+    }
 
     // BARS
     //
@@ -226,14 +238,19 @@ export default function display(weeklyData) {
     })
     .on('click', (d) => {
 
+
         const timeFadeOut = 350;
         const detailsContent = d3.select(".details__content");
-        detailsContent.classed("fading-out", true);
-        setTimeout(() => {
-            changeDetailsContent();
-            detailsContent.classed("fading-out", false)
-        }, timeFadeOut);
-
+        // if not hidden, do fadeout
+        if (!d3.select(".details").classed("details--hidden")) {
+            detailsContent.classed("fading-out", true);
+            setTimeout(() => {
+                changeDetailsContent();
+                detailsContent.classed("fading-out", false)
+            }, timeFadeOut);
+        }
+        
+        // prepare overlay
         function changeDetailsContent() {
             d3.select(".details__img").attr("src", d.Poster);
             d3.select(".details__props__title").text(d.Title);
@@ -244,6 +261,9 @@ export default function display(weeklyData) {
                 .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
                 .attr("target", "_blank");
         }
+
+        // open overlay
+        openOverlay();
 
         // let colors = null;
         // colors = colorThief.getColor(document.querySelector('.details__img'));
