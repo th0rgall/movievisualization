@@ -3,6 +3,12 @@ html {
   box-sizing: border-box;
 }
 
+@mixin setLinkSelectorStyle {
+  &:hover, &:link, &:active, &:visited {
+        @content;
+    }
+}
+
 $dimmed: #D8D8D8;
 
 body {
@@ -24,6 +30,16 @@ body {
     border: 1px solid $dimmed;
     background-color: #000;
     padding: 25px;
+
+    &__content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+
+      p {
+        line-height: 1.5em;
+      }
+    }
 
     &__top {
       display: flex;
@@ -54,12 +70,34 @@ body {
 
     &__bottom {
       color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1 0 0;
     }
 
     &__plot {
-      line-height: 1.5em;
       margin: $element-margin 0;
     }
+
+    &__links {
+      display: block;
+      
+      align-self: flex-end;
+      font-size: 24px;
+      font-weight: 200;
+      &__imdb img {
+        height: 35px;
+        vertical-align: middle;
+      }
+      &__imdb {
+        @include setLinkSelectorStyle {
+          color: white;
+          text-decoration: none;
+        }
+      }
+    }
+
 
   }
 

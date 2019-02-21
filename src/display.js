@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { setTimeout } from 'timers';
+import imdbLogo from './imdb_logo.png'; 
 const ColorThief = require('color-thief');
 const colorThief = new ColorThief();
 
@@ -176,6 +176,8 @@ export default function display(weeklyData) {
             </div>
             <div class="details__bottom">
                 <p class="details__plot"></p>
+                <p class="details__comment"></p>
+                <a class="details__links details__links__imdb">More on <img src="${imdbLogo}"/></a>
             </div>
         </div>
     `);
@@ -237,6 +239,10 @@ export default function display(weeklyData) {
             d3.select(".details__props__title").text(d.Title);
             d3.select(".details__props__facts").html(`${d.Year}<br>${d.Genre}`)
             d3.select(".details__plot").text(d.Plot);
+            d3.select(".details__comment").text(d.Comment);
+            d3.select(".details__links__imdb")
+                .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
+                .attr("target", "_blank");
         }
 
         // let colors = null;
