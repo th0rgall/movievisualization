@@ -1,3 +1,4 @@
 node_modules
 dist
 scripts/.credentials.json
+scripts/credentials.json
