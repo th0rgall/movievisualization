@@ -1,5 +1,7 @@
 import * as d3 from 'd3';
 import imdbLogo from './imdb_logo.png'; 
+import flashIcon from './flash.svg';
+
 const ColorThief = require('color-thief');
 const colorThief = new ColorThief();
 
@@ -205,13 +207,16 @@ export default function display(weeklyData) {
 
     const highlightClass = "movieTile--highlighted";
 
-    bars.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
+    let gs = bars.append("g")
+    .attr("transform", d => `translate(${x(d.week)}, ${y(d.filmCount)})`)
+    
+    
+        
+    gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
     //.style("fill", "steelblue")
-    .attr("class", "movieTile")
-    .attr("x", function(d) { return x(d.week); })
+    .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
     .attr("width", x.bandwidth())
-    .attr("y", function(d) { return y(d.filmCount); })
     .attr("height", y.bandwidth())
     .attr("xlink:href", function(d) { return d.Poster ? d.Poster : null})
     .attr("fill", function(d) {return d.Poster ? null : "grey"})
@@ -238,7 +243,9 @@ export default function display(weeklyData) {
     })
     .on('click', (d) => {
 
-
+        // open overlay
+        openOverlay();
+        
         const timeFadeOut = 350;
         const detailsContent = d3.select(".details__content");
         // if not hidden, do fadeout
@@ -249,8 +256,8 @@ export default function display(weeklyData) {
                 detailsContent.classed("fading-out", false)
             }, timeFadeOut);
         }
-        
-        // prepare overlay
+
+        // fill overlay
         function changeDetailsContent() {
             d3.select(".details__img").attr("src", d.Poster);
             d3.select(".details__props__title").text(d.Title);
@@ -261,9 +268,6 @@ export default function display(weeklyData) {
                 .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
                 .attr("target", "_blank");
         }
-
-        // open overlay
-        openOverlay();
 
         // let colors = null;
         // colors = colorThief.getColor(document.querySelector('.details__img'));
@@ -277,4 +281,11 @@ export default function display(weeklyData) {
         // }, 20);
  
     })
+    gs.filter(d => d.Favorite === "checked").append("image")
+        .attr("x", "-15")
+        .attr("y", "-4")
+        .attr("transform", "translate(0,0)")
+        .attr("width", "35").attr("height", "35")
+        //.attr("class", "movieTile__favorite")
+        .attr('xlink:href', flashIcon);
 }
