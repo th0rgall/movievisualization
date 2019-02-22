@@ -12,15 +12,23 @@ html {
 $dimmed: #D8D8D8;
 $background: #1D1E1F; 
 
+// as per https://stackoverflow.com/questions/21515042/scrolling-a-flexbox-with-overflowing-content
 body {
     font-family: 'Helvetica Neue', 'Helvetica-Neue', 'Helvetica';
     background-color: $background;
     display: flex;
+    flex: 1;
     flex-direction: column;
     justify-content: center;
-    height: 100%;
+    overflow: auto;
+    //height: 100%;
     margin: 0;
   }
+
+svg {
+  display: flex;
+  min-height: min-content;
+}
 
   .details__content.fading-out {
     opacity: 0;

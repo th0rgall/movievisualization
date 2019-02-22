@@ -25,22 +25,42 @@ export default function display(weeklyData) {
         }, []);
     };
 
-    let individualData = toIndividualData(weeklyData);
+    function releaseCount(data) {
+        let yearMap = {};
+        let out = [];
+        data.filter(d => d.Year).forEach(d => {
+            if (!(d.Year in yearMap)) {
+                yearMap[d.Year] = 1;
+                out.push({...d, releaseCount: 1})
+    
+            } else {
+                let val = yearMap[d.Year];
+                yearMap[d.Year] = ++val;
+                out.push({...d, releaseCount: val})
+            }
+        })
+        return out;
+    }
+
+    let individualData = releaseCount(toIndividualData(weeklyData));
     
     const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
     const innerPadding = 0.30;
     const tileWidth = 52;
-    const width = (tileWidth * ( 1 + innerPadding)) * weeklyData.length;
+    const ext = d3.extent(individualData.map(d => Number(d.Year)));
+    const no = ext[1] - ext[0];
+    const width = (tileWidth * ( 1 + innerPadding)) * no;
     
-    // var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
-    var x = d3.scaleBand().domain(weeklyData.map(function(d) { return d.week; }))
+    //var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
+    var x = d3.scaleBand().domain(d3.range(no+1).map(a => a+ext[0]))
     .range([0, width]).paddingInner(innerPadding);
 
     const posterRatio = 1.48; // average ratio...
     const tileHeight = tileWidth * posterRatio;
     const verticalPadding = tileWidth * innerPadding; 
     let maxFilmCount = d3.max(individualData.map(f => f.filmCount));
-    let height = tileHeight * maxFilmCount + verticalPadding * (maxFilmCount - 1);
+    let maxReleaseCount = d3.max(individualData.map(f => f.releaseCount)); // todo: can be computed simult.
+    let height = tileHeight * maxReleaseCount + verticalPadding * (maxReleaseCount - 1);
 
     // Parse the date / time
     var	parseDate = d3.timeFormat("%Y-%m").parse;
@@ -51,31 +71,32 @@ export default function display(weeklyData) {
 
     // yearAxis
     var yearAxis = d3.axisBottom(x);
-    yearAxis.tickFormat(d3.timeFormat("%Y"));
-    yearAxis.tickValues(x.domain().filter(function(d,i,a) {
-        // TODO: maybe some unattended edge cases here
-        if (d.getMonth() === 0) {
-            // can look back
-            if (i > 0) {
-                if (a[i-1].getMonth() === 11) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }));
+    //yearAxis.tickFormat(d3.timeFormat("%Y"));
+    // yearAxis.tickValues(x.domain().filter(function(d,i,a) {
+    //     // TODO: maybe some unattended edge cases here
+    //     if (d.getMonth() === 0) {
+    //         // can look back
+    //         if (i > 0) {
+    //             if (a[i-1].getMonth() === 11) {
+    //                 return true;
+    //             }
+    //         }
+    //     }
+    //     return false;
+    // }));
+    yearAxis.tickValues(x.domain().filter((d,i,a) => d % 10 == 0));
 
     // monthAxis
     var monthAxis = d3.axisBottom(x);
-    monthAxis.tickFormat(d3.timeFormat("%B"));
-    monthAxis.tickValues(x.domain().filter((d,i,a) => {
-        if (i > 0) {
-            if (a[i-1].getMonth() !== d.getMonth()) {
-                return true;
-            }
-        }
-        return false;
-    }));
+    //monthAxis.tickFormat(d3.timeFormat("%Y"));
+    // monthAxis.tickValues(x.domain().filter((d,i,a) => {
+    //     if (i > 0) {
+    //         if (a[i-1].getMonth() !== d.getMonth()) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }));
     
     var yAxis = d3.axisLeft(y);
 
@@ -93,7 +114,8 @@ export default function display(weeklyData) {
     // });
 
     //y.domain([0, d3.max(data, function(d) { return d.weekCount; })]);
-    y.domain(enumToMax(maxFilmCount))
+    //y.domain(enumToMax(maxFilmCount))
+    y.domain(enumToMax(maxReleaseCount))
 
     let textColor = "#fff";
 
@@ -208,7 +230,7 @@ export default function display(weeklyData) {
     const highlightClass = "movieTile--highlighted";
 
     let gs = bars.append("g")
-    .attr("transform", d => `translate(${x(d.week)}, ${y(d.filmCount)})`)
+    .attr("transform", d => `translate(${x(+d.Year)}, ${y(d.releaseCount)})`)
     
     
         
