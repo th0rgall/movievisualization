@@ -22,7 +22,7 @@ let oldMovies = JSON.parse(fs.readFileSync('dist/movies.json', 'utf8'));
 const moviesAirtableFiltered = moviesAirtable.filter(e => 
     e.Title && 
     e.Date && 
-    e.Type && e.Type == 'Film' &&
+    // e.Type && e.Type == 'Film' &&
     e.imdbID
    )
 

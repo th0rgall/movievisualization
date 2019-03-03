@@ -12,7 +12,6 @@ html {
 $dimmed: #D8D8D8;
 $background: #1D1E1F; 
 
-// as per https://stackoverflow.com/questions/21515042/scrolling-a-flexbox-with-overflowing-content
 body {
     font-family: 'Helvetica Neue', 'Helvetica-Neue', 'Helvetica';
     background-color: $background;
@@ -24,11 +23,6 @@ body {
     //height: 100%;
     margin: 0;
   }
-
-svg {
-  display: flex;
-  min-height: min-content;
-}
 
   .details__content.fading-out {
     opacity: 0;
@@ -202,6 +196,27 @@ svg {
     visibility: hidden;
     width: 200px;
   }
+
+  .axis-container, .movies-container {
+    overflow-x: scroll;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { 
+      display: none; 
+    }
+  }
+
+  .movies-container {
+    height: 600px;
+    overflow-y: scroll;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { 
+      display: none; 
+    }
+  }
+
+
 
   .movieTile {
     transition: 0.3s filter linear;

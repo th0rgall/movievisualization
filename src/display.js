@@ -28,7 +28,14 @@ export default function display(weeklyData) {
     function releaseCount(data) {
         let yearMap = {};
         let out = [];
-        data.filter(d => d.Year).forEach(d => {
+        data.filter(d => Boolean(d.Year) && /\d{4}/.exec(d.Year))
+        // temp for series
+        .map(
+            d => {
+            let year = /\d{4}/.exec(d.Year);
+            return {...d, Year: year[0]};
+        })
+        .forEach(d => {
             if (!(d.Year in yearMap)) {
                 yearMap[d.Year] = 1;
                 out.push({...d, releaseCount: 1})
@@ -45,19 +52,20 @@ export default function display(weeklyData) {
     let individualData = releaseCount(toIndividualData(weeklyData));
     
     const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
-    const innerPadding = 0.30;
+    const innerPaddingX = 0.30;
+    const innerPaddingY = 0.15;
     const tileWidth = 52;
     const ext = d3.extent(individualData.map(d => Number(d.Year)));
     const no = ext[1] - ext[0];
-    const width = (tileWidth * ( 1 + innerPadding)) * no;
+    const width = (tileWidth * ( 1 + innerPaddingX)) * no;
     
     //var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
     var x = d3.scaleBand().domain(d3.range(no+1).map(a => a+ext[0]))
-    .range([0, width]).paddingInner(innerPadding);
+    .range([0, width]).paddingInner(innerPaddingX);
 
     const posterRatio = 1.48; // average ratio...
     const tileHeight = tileWidth * posterRatio;
-    const verticalPadding = tileWidth * innerPadding; 
+    const verticalPadding = tileHeight * innerPaddingY; 
     let maxFilmCount = d3.max(individualData.map(f => f.filmCount));
     let maxReleaseCount = d3.max(individualData.map(f => f.releaseCount)); // todo: can be computed simult.
     let height = tileHeight * maxReleaseCount + verticalPadding * (maxReleaseCount - 1);
@@ -67,7 +75,7 @@ export default function display(weeklyData) {
 
     //var y = d3.scaleLinear().rangeRound([height, 0]);
     let enumToMax = m => {let a = []; for (let i = 1; i <= m; i++) {a[i-1] = i} return a};
-    var y = d3.scaleBand().rangeRound([height, 0]).paddingInner(0.1);
+    var y = d3.scaleBand().rangeRound([height, 0]).paddingInner(innerPaddingY);
 
     // yearAxis
     var yearAxis = d3.axisBottom(x);
@@ -100,13 +108,19 @@ export default function display(weeklyData) {
     
     var yAxis = d3.axisLeft(y);
 
-    var svg = d3.select("body").append("svg")
+    var topdiv = d3.select("body")
+        .append("div").attr("class", "movies-container");
+
+    var svg = topdiv
+    .append("svg")
     .attr("class", "movie-svg")
     .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+    //.attr("height", height + margin.top + margin.bottom)
+    .attr("height", height)
     .append("g")
     .attr("transform", 
-        "translate(" + margin.left + "," + margin.top + ")");
+ //       "translate(" + margin.left + "," + margin.top + ")");
+        "translate(" + margin.left + ", 0)");
 
     // data.forEach(function(d) {
     //     d.date = parseDate(d.date);
@@ -119,10 +133,64 @@ export default function display(weeklyData) {
 
     let textColor = "#fff";
 
-    let yearTicks = svg.append("g");
+    let botdiv = d3.select("body")
+        .append("div").attr("class","axis-container");
+    let botsvg = botdiv.append("svg");
+    let yearTicks = botsvg
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", 150)
+    .append("g");
+
+    let favSheet = false;
+    window.addEventListener("keydown", (e) => {
+         if (e.key.toUpperCase() == "F") {
+            if (!favSheet) {
+                var sheet = document.createElement('style');
+                sheet.id = 'fav-sheet';
+                sheet.innerHTML = `.movieTile:not(.favorite) {
+                    opacity: 0.3;
+                    transition: 0.7s;
+                }`;
+                document.body.appendChild(sheet);
+                favSheet = true;
+            } else {
+                let sheet = document.getElementById('fav-sheet');
+                sheet.parentNode.removeChild(sheet);
+                favSheet = false;
+            }
+        }
+    })
+
+
+    setTimeout(function() {
+        // https://stackoverflow.com/questions/9236314/how-do-i-synchronize-the-scroll-position-of-two-divs
+        var isSyncingLeftScroll = false;
+        var isSyncingRightScroll = false;
+        var leftDiv = document.querySelector(".axis-container");
+        var rightDiv = document.querySelector('.movies-container');
+        rightDiv.scrollTop = rightDiv.scrollTopMax;
+        
+        
+        leftDiv.onscroll = function() {
+        if (!isSyncingLeftScroll) {
+            isSyncingRightScroll = true;
+            rightDiv.scrollLeft = this.scrollLeft;
+        }
+        isSyncingLeftScroll = false;
+        }
+        
+        rightDiv.onscroll = function() {
+        if (!isSyncingRightScroll) {
+            isSyncingLeftScroll = true;
+            leftDiv.scrollLeft = this.scrollLeft;
+        }
+        isSyncingRightScroll = false;
+        }
+    }, 300);
+    
     yearTicks
     .attr("class", "x axis axis--year")
-    .attr("transform", "translate(0," + height + ")")
+    //.attr("transform", "translate(0," + height + ")")
     .call(yearAxis)
     .selectAll("text")
     .attr("class", "axis__year-ticks")
@@ -135,10 +203,10 @@ export default function display(weeklyData) {
     d3.select(".axis--year .domain")
     .attr("transform", `translate(0, ${verticalPadding})`);
 
-    let monthTicks = svg.append("g");
+    let monthTicks = botsvg.append("g");
     monthTicks
     .attr("class", "x axis axis--month")
-    .attr("transform", "translate(0," + height + ")")
+    //.attr("transform", "translate(0," + height + ")")
     .call(monthAxis)
     .selectAll("text")
     .attr("class", "axis__month-ticks")
@@ -163,7 +231,7 @@ export default function display(weeklyData) {
     // .attr("fill", textColor)
     // .text("Value ($)");
 
-    ///////////////////////
+        ///////////////////////
     // Tooltips
     var overlay = svg.append("rect")
     .attr("class", "overlay")
@@ -230,9 +298,7 @@ export default function display(weeklyData) {
     const highlightClass = "movieTile--highlighted";
 
     let gs = bars.append("g")
-    .attr("transform", d => `translate(${x(+d.Year)}, ${y(d.releaseCount)})`)
-    
-    
+    .attr("transform", d => `translate(${x(+d.Year)}, ${y(d.releaseCount)})`);
         
     gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
@@ -249,7 +315,7 @@ export default function display(weeklyData) {
         let ttoffsety = -100;
         this.classList.toggle(highlightClass);
 
-        tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.title}`)
+        tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.Title}`)
         .style("visibility", "visible")
         // .style("top", d3.mouse(this)[1] - (tooltip[0][0].clientHeight - 30) + "px")
         // .style("left", d3.mouse(this)[0] - (tooltip[0][0].clientWidth / 2.0) + "px");
