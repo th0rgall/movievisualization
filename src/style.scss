@@ -18,9 +18,9 @@ body {
     display: flex;
     flex: 1;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
     overflow: auto;
-    //height: 100%;
+    height: 100%;
     margin: 0;
   }
 
@@ -206,8 +206,12 @@ body {
     }
   }
 
+  .axis-container {
+    height: 150px;
+  }
+
   .movies-container {
-    height: 600px;
+    flex: 1 0 0; // grow
     overflow-y: scroll;
     scrollbar-width: none;
 
