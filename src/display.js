@@ -29,7 +29,7 @@ export default function display(weeklyData) {
         let yearMap = {};
         let out = [];
         data.filter(d => Boolean(d.Year) && /\d{4}/.exec(d.Year))
-        // temp for series
+        // TODO: temp for series
         .map(
             d => {
             let year = /\d{4}/.exec(d.Year);
@@ -68,8 +68,69 @@ export default function display(weeklyData) {
         document.getElementById("control-favorites").classList.toggle("active");
     }
 
+    class ReleaseMode {
+        getX(d) {
+            return xRelease(+d.Year) + innerPaddingXAbsolute/2 + 1;
+        }
+
+        getY(d) {
+            return yRelease(d.releaseCount);
+        }
+
+        getBandwidth() {
+            return xRelease.bandwidth();
+        }
+
+        getWidth() {
+            return releaseWidth;
+        }
+
+        getHeight() {
+            return releaseHeight;
+        }
+
+        getBandheight() {
+            return yRelease.bandwidth();
+        }
+
+        getMonthAxis() {
+            return monthAxisRelease
+        }
+    }
+
+    class WatchedMode {
+        getX(d) {
+            return x(d.week);
+        }
+
+        getY(d) {
+            return y(d.filmCount);
+        }
+        
+        getBandwidth() {
+            return x.bandwidth();
+        }
+
+        getWidth() {
+            return width;
+        }
+
+        getHeight() {
+            return height;
+        }
+        
+        getBandheight() {
+            return y.bandwidth();
+        }
+
+        getMonthAxis() {
+            return monthAxis;
+        }
+    }
+
     // viewMode = release | watched
     let viewMode = "release";
+    let mode = new ReleaseMode();
 
     let individualData = releaseCount(toIndividualData(weeklyData));
     
@@ -81,29 +142,36 @@ export default function display(weeklyData) {
     const no = ext[1] - ext[0];
     const innerPaddingXAbsolute = tileWidth * innerPaddingX; 
     const tileWithOneSidePadding = tileWidth * ( 1 + innerPaddingX);
-    const width =  tileWithOneSidePadding * no - (2 * innerPaddingXAbsolute);
-    
+    const releaseWidth =  tileWithOneSidePadding * no - (2 * innerPaddingXAbsolute);
+    const width = (tileWidth * ( 1 + innerPaddingX)) * weeklyData.length;
+
     // domain for watched view
     var x = d3.scaleBand().domain(weeklyData.map(function(d) { return d.week; }))
         .range([0, width]).paddingInner(innerPaddingX);
 
     // domain for release view
     var xRelease = d3.scaleBand().domain(d3.range(no+1).map(a => a+ext[0]))
-    .range([0, width]).paddingInner(innerPaddingX);
+    .range([0, releaseWidth]).paddingInner(innerPaddingX);
 
     const posterRatio = 1.48; // average ratio...
     const tileHeight = tileWidth * posterRatio;
     const verticalPadding = tileHeight * innerPaddingY; 
     let maxFilmCount = d3.max(individualData.map(f => f.filmCount));
     let maxReleaseCount = d3.max(individualData.map(f => f.releaseCount)); // todo: can be computed simult.
-    let height = tileHeight * maxReleaseCount + verticalPadding * (maxReleaseCount - 1);
+    let releaseHeight = tileHeight * maxReleaseCount + verticalPadding * (maxReleaseCount - 1);
+    let height = tileHeight * maxFilmCount + verticalPadding * (maxFilmCount - 1);
 
     // Parse the date / time
     var	parseDate = d3.timeFormat("%Y-%m").parse;
 
     //var y = d3.scaleLinear().rangeRound([height, 0]);
     let enumToMax = m => {let a = []; for (let i = 1; i <= m; i++) {a[i-1] = i} return a};
+
+    // watched mode
     var y = d3.scaleBand().rangeRound([height, 0]).paddingInner(innerPaddingY);
+
+    // release mode
+    var yRelease = d3.scaleBand().rangeRound([releaseHeight, 0]).paddingInner(innerPaddingY);
 
     // yearAxis for watched date
     var yearAxis= d3.axisBottom(x);
@@ -140,7 +208,11 @@ export default function display(weeklyData) {
     // month for release view
     var monthAxisRelease = d3.axisBottom(xRelease);
 
+    // y axis for watched view
     var yAxis = d3.axisLeft(y);
+
+    // y axis for release view
+    var yAxisRelease = d3.axisLeft(yRelease);
 
     var topdiv = d3.select("body")
         .append("div").attr("class", "movies-container");
@@ -148,9 +220,9 @@ export default function display(weeklyData) {
     var svg = topdiv
     .append("svg")
     .attr("class", "movie-svg")
-    .attr("width", width + margin.left + margin.right)
+    .attr("width", mode.getWidth() + margin.left + margin.right)
     //.attr("height", height + margin.top + margin.bottom)
-    .attr("height", height)
+    .attr("height", mode.getHeight())
     .append("g")
     .attr("transform", 
  //       "translate(" + margin.left + "," + margin.top + ")");
@@ -162,8 +234,9 @@ export default function display(weeklyData) {
     // });
 
     //y.domain([0, d3.max(data, function(d) { return d.weekCount; })]);
-    //y.domain(enumToMax(maxFilmCount))
-    y.domain(enumToMax(maxReleaseCount))
+    y.domain(enumToMax(maxFilmCount));
+
+    yRelease.domain(enumToMax(maxReleaseCount));
 
     let textColor = "#fff";
 
@@ -171,7 +244,7 @@ export default function display(weeklyData) {
         .append("div").attr("class","axis-container");
     let botsvg = botdiv.append("svg");
     let yearTicks = botsvg
-        .attr("width", width + margin.left + margin.right)
+        .attr("width", mode.getWidth() + margin.left + margin.right)
         .attr("height", 150)
     .append("g")
     .attr("transform", "translate(" + margin.left + ", 0)");
@@ -256,8 +329,8 @@ export default function display(weeklyData) {
     // Tooltips
     var overlay = svg.append("rect")
     .attr("class", "overlay")
-    .attr("width", width)
-    .attr("height", height)
+    .attr("width", mode.getWidth())
+    .attr("height", mode.getHeight())
 
     var tooltip = d3.select("body").append("div")
     .attr("class", "tooltip");
@@ -339,14 +412,14 @@ export default function display(weeklyData) {
 
     let gs = bars.append("g")
     // + 1 because it seeems offf
-    .attr("transform", d => `translate(${xRelease(+d.Year) + innerPaddingXAbsolute/2 + 1}, ${y(d.releaseCount)})`);
+    .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getY(d)})`);
         
     gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
     //.style("fill", "steelblue")
     .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
-    .attr("width", xRelease.bandwidth())
-    .attr("height", y.bandwidth())
+    .attr("width", mode.getBandwidth())
+    .attr("height", mode.getBandheight())
     .attr("xlink:href", function(d) { return d.Poster ? d.Poster : null})
     .attr("fill", function(d) {return d.Poster ? null : "grey"})
     .on('mouseover', function(d) {
