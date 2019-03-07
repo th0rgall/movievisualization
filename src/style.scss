@@ -220,8 +220,6 @@ body {
     }
   }
 
-
-
   .movieTile {
     transition: 0.3s filter linear;
     filter: drop-shadow( 0 6px 9px rgba(0,0,0,0.50));
@@ -236,5 +234,29 @@ body {
       display: block;
       height: 24px;
       width: 24px;
+    }
+  }
+
+  .controls {
+    position: absolute;
+    left: 40px;
+    top: 40px;
+    line-height: 1.4rem;
+
+    color: #fff;
+    font-size: 1rem;
+
+    &__title:not(:first-child) {
+      margin-top: .3em;
+      display: block;
+    }
+
+    &__options {
+      margin-left: 20px;
+    }
+
+    &__option.active {
+      border-bottom: 2px solid #fff;
+      padding-bottom: 1px;
     }
   }

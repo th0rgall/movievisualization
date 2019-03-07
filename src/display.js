@@ -49,6 +49,25 @@ export default function display(weeklyData) {
         return out;
     }
 
+    function toggleFavorites(e) {
+        if (!favSheet) {
+            var sheet = document.createElement('style');
+            sheet.id = 'fav-sheet';
+            sheet.innerHTML = `.movieTile:not(.favorite) {
+                opacity: 0.3;
+                transition: 0.7s;
+            }`;
+            document.body.appendChild(sheet);
+            favSheet = true;
+        } else {
+            let sheet = document.getElementById('fav-sheet');
+            sheet.parentNode.removeChild(sheet);
+            favSheet = false;
+        }
+
+        document.getElementById("control-favorites").classList.toggle("active");
+    }
+
     let individualData = releaseCount(toIndividualData(weeklyData));
     
     const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
@@ -146,24 +165,9 @@ export default function display(weeklyData) {
 
     let favSheet = false;
     window.addEventListener("keydown", (e) => {
-         if (e.key.toUpperCase() == "F") {
-            if (!favSheet) {
-                var sheet = document.createElement('style');
-                sheet.id = 'fav-sheet';
-                sheet.innerHTML = `.movieTile:not(.favorite) {
-                    opacity: 0.3;
-                    transition: 0.7s;
-                }`;
-                document.body.appendChild(sheet);
-                favSheet = true;
-            } else {
-                let sheet = document.getElementById('fav-sheet');
-                sheet.parentNode.removeChild(sheet);
-                favSheet = false;
-            }
-        }
-    })
-
+        if (e.key.toUpperCase() == "F") {
+            toggleFavorites();
+        }});
 
     setTimeout(function() {
         // https://stackoverflow.com/questions/9236314/how-do-i-synchronize-the-scroll-position-of-two-divs
@@ -256,6 +260,25 @@ export default function display(weeklyData) {
     .attr("x", 9)
     .attr("dy", ".35em")
     .attr("fill", textColor);
+
+    // CONTROLS
+    //
+    // 
+
+    var controls = d3.select("body").append("div").attr("class","controls").html(`
+        <span class="controls__title">view by</span>
+        <div class="controls__options">
+            <span class="controls__option active">release date</span>
+            |
+            <span class="controls__option">watched date</span>
+        </div>
+        <span class="controls__title">filters</span>
+        <div class="controls__options">
+            <span class="controls__option" id="control-favorites">only favorites</span>
+        </div>
+    `);
+
+    document.getElementById("control-favorites").addEventListener("click", toggleFavorites);
 
     // DETAILS
     //
