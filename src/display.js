@@ -68,6 +68,9 @@ export default function display(weeklyData) {
         document.getElementById("control-favorites").classList.toggle("active");
     }
 
+    // viewMode = release | watched
+    let viewMode = "release";
+
     let individualData = releaseCount(toIndividualData(weeklyData));
     
     const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
@@ -80,8 +83,12 @@ export default function display(weeklyData) {
     const tileWithOneSidePadding = tileWidth * ( 1 + innerPaddingX);
     const width =  tileWithOneSidePadding * no - (2 * innerPaddingXAbsolute);
     
-    //var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
-    var x = d3.scaleBand().domain(d3.range(no+1).map(a => a+ext[0]))
+    // domain for watched view
+    var x = d3.scaleBand().domain(weeklyData.map(function(d) { return d.week; }))
+        .range([0, width]).paddingInner(innerPaddingX);
+
+    // domain for release view
+    var xRelease = d3.scaleBand().domain(d3.range(no+1).map(a => a+ext[0]))
     .range([0, width]).paddingInner(innerPaddingX);
 
     const posterRatio = 1.48; // average ratio...
@@ -98,35 +105,41 @@ export default function display(weeklyData) {
     let enumToMax = m => {let a = []; for (let i = 1; i <= m; i++) {a[i-1] = i} return a};
     var y = d3.scaleBand().rangeRound([height, 0]).paddingInner(innerPaddingY);
 
-    // yearAxis
-    var yearAxis = d3.axisBottom(x);
-    //yearAxis.tickFormat(d3.timeFormat("%Y"));
-    // yearAxis.tickValues(x.domain().filter(function(d,i,a) {
-    //     // TODO: maybe some unattended edge cases here
-    //     if (d.getMonth() === 0) {
-    //         // can look back
-    //         if (i > 0) {
-    //             if (a[i-1].getMonth() === 11) {
-    //                 return true;
-    //             }
-    //         }
-    //     }
-    //     return false;
-    // }));
-    yearAxis.tickValues(x.domain().filter((d,i,a) => d % 10 == 0));
+    // yearAxis for watched date
+    var yearAxis= d3.axisBottom(x);
+    yearAxis.tickFormat(d3.timeFormat("%Y"));
+    yearAxis.tickValues(x.domain().filter(function(d,i,a) {
+        // TODO: maybe some unattended edge cases here
+        if (d.getMonth() === 0) {
+            // can look back
+            if (i > 0) {
+                if (a[i-1].getMonth() === 11) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }));
 
-    // monthAxis
+    // yearAxis for release view
+    var yearAxisRelease = d3.axisBottom(xRelease);
+    yearAxisRelease.tickValues(xRelease.domain().filter((d,i,a) => d % 10 == 0));
+
+    // monthAxis for watched view
     var monthAxis = d3.axisBottom(x);
-    //monthAxis.tickFormat(d3.timeFormat("%Y"));
-    // monthAxis.tickValues(x.domain().filter((d,i,a) => {
-    //     if (i > 0) {
-    //         if (a[i-1].getMonth() !== d.getMonth()) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }));
+    monthAxis.tickFormat(d3.timeFormat("%Y"));
+    monthAxis.tickValues(x.domain().filter((d,i,a) => {
+        if (i > 0) {
+            if (a[i-1].getMonth() !== d.getMonth()) {
+                return true;
+            }
+        }
+        return false;
+    }));
     
+    // month for release view
+    var monthAxisRelease = d3.axisBottom(xRelease);
+
     var yAxis = d3.axisLeft(y);
 
     var topdiv = d3.select("body")
@@ -198,7 +211,7 @@ export default function display(weeklyData) {
     yearTicks
     .attr("class", "x axis axis--year")
     //.attr("transform", "translate(0," + height + ")")
-    .call(yearAxis)
+    .call(yearAxisRelease)
     .selectAll("text")
     .attr("class", "axis__year-ticks")
     .style("text-anchor", "start")
@@ -215,7 +228,7 @@ export default function display(weeklyData) {
     monthTicks
     .attr("class", "x axis axis--month")
     //.attr("transform", "translate(0," + height + ")")
-    .call(monthAxis)
+    .call(monthAxisRelease)
     .selectAll("text")
     .attr("class", "axis__month-ticks")
     .style("text-anchor", "start")
@@ -326,13 +339,13 @@ export default function display(weeklyData) {
 
     let gs = bars.append("g")
     // + 1 because it seeems offf
-    .attr("transform", d => `translate(${x(+d.Year) + innerPaddingXAbsolute/2 + 1}, ${y(d.releaseCount)})`);
+    .attr("transform", d => `translate(${xRelease(+d.Year) + innerPaddingXAbsolute/2 + 1}, ${y(d.releaseCount)})`);
         
     gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
     //.style("fill", "steelblue")
     .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
-    .attr("width", x.bandwidth())
+    .attr("width", xRelease.bandwidth())
     .attr("height", y.bandwidth())
     .attr("xlink:href", function(d) { return d.Poster ? d.Poster : null})
     .attr("fill", function(d) {return d.Poster ? null : "grey"})
