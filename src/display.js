@@ -57,7 +57,9 @@ export default function display(weeklyData) {
     const tileWidth = 52;
     const ext = d3.extent(individualData.map(d => Number(d.Year)));
     const no = ext[1] - ext[0];
-    const width = (tileWidth * ( 1 + innerPaddingX)) * no;
+    const innerPaddingXAbsolute = tileWidth * innerPaddingX; 
+    const tileWithOneSidePadding = tileWidth * ( 1 + innerPaddingX);
+    const width =  tileWithOneSidePadding * no - (2 * innerPaddingXAbsolute);
     
     //var x = d3.scaleOrdinal().rangeRoundBands([0, width], .05);
     var x = d3.scaleBand().domain(d3.range(no+1).map(a => a+ext[0]))
@@ -139,7 +141,8 @@ export default function display(weeklyData) {
     let yearTicks = botsvg
         .attr("width", width + margin.left + margin.right)
         .attr("height", 150)
-    .append("g");
+    .append("g")
+    .attr("transform", "translate(" + margin.left + ", 0)");
 
     let favSheet = false;
     window.addEventListener("keydown", (e) => {
@@ -203,7 +206,8 @@ export default function display(weeklyData) {
     d3.select(".axis--year .domain")
     .attr("transform", `translate(0, ${verticalPadding})`);
 
-    let monthTicks = botsvg.append("g");
+    let monthTicks = botsvg.append("g")
+                    .attr("transform", "translate(" + margin.left + ", 0)");
     monthTicks
     .attr("class", "x axis axis--month")
     //.attr("transform", "translate(0," + height + ")")
@@ -298,7 +302,8 @@ export default function display(weeklyData) {
     const highlightClass = "movieTile--highlighted";
 
     let gs = bars.append("g")
-    .attr("transform", d => `translate(${x(+d.Year)}, ${y(d.releaseCount)})`);
+    // + 1 because it seeems offf
+    .attr("transform", d => `translate(${x(+d.Year) + innerPaddingXAbsolute/2 + 1}, ${y(d.releaseCount)})`);
         
     gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
         : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
