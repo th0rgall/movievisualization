@@ -7,6 +7,8 @@ const colorThief = new ColorThief();
 
 export default function display(weeklyData) {
 
+    // STATIC CODE
+
     let toIndividualData = (weeklydata) => {
         return weeklydata.reduce((acc, c, i, arr) => {
 
@@ -94,7 +96,11 @@ export default function display(weeklyData) {
         }
 
         getMonthAxis() {
-            return monthAxisRelease
+            return monthAxisRelease;
+        }
+
+        getYearAxis() {
+            return yearAxisRelease;
         }
     }
 
@@ -126,11 +132,14 @@ export default function display(weeklyData) {
         getMonthAxis() {
             return monthAxis;
         }
+
+        getYearAxis() {
+            return yearAxis;
+        }
     }
 
     // viewMode = release | watched
-    let viewMode = "release";
-    let mode = new ReleaseMode();
+    let mode = new WatchedMode();
 
     let individualData = releaseCount(toIndividualData(weeklyData));
     
@@ -195,7 +204,7 @@ export default function display(weeklyData) {
 
     // monthAxis for watched view
     var monthAxis = d3.axisBottom(x);
-    monthAxis.tickFormat(d3.timeFormat("%Y"));
+    monthAxis.tickFormat(d3.timeFormat("%B"));
     monthAxis.tickValues(x.domain().filter((d,i,a) => {
         if (i > 0) {
             if (a[i-1].getMonth() !== d.getMonth()) {
@@ -207,6 +216,7 @@ export default function display(weeklyData) {
     
     // month for release view
     var monthAxisRelease = d3.axisBottom(xRelease);
+    monthAxisRelease.tickFormat(d3.timeFormat("%Y"));
 
     // y axis for watched view
     var yAxis = d3.axisLeft(y);
@@ -214,8 +224,12 @@ export default function display(weeklyData) {
     // y axis for release view
     var yAxisRelease = d3.axisLeft(yRelease);
 
+
+
+    // DYNAMIC CODE
+    
     var topdiv = d3.select("body")
-        .append("div").attr("class", "movies-container");
+    .append("div").attr("class", "movies-container");
 
     var svg = topdiv
     .append("svg")
@@ -250,6 +264,7 @@ export default function display(weeklyData) {
     .attr("transform", "translate(" + margin.left + ", 0)");
 
     let favSheet = false;
+
     window.addEventListener("keydown", (e) => {
         if (e.key.toUpperCase() == "F") {
             toggleFavorites();
@@ -284,7 +299,7 @@ export default function display(weeklyData) {
     yearTicks
     .attr("class", "x axis axis--year")
     //.attr("transform", "translate(0," + height + ")")
-    .call(yearAxisRelease)
+    .call(mode.getYearAxis())
     .selectAll("text")
     .attr("class", "axis__year-ticks")
     .style("text-anchor", "start")
@@ -301,7 +316,7 @@ export default function display(weeklyData) {
     monthTicks
     .attr("class", "x axis axis--month")
     //.attr("transform", "translate(0," + height + ")")
-    .call(monthAxisRelease)
+    .call(mode.getMonthAxis())
     .selectAll("text")
     .attr("class", "axis__month-ticks")
     .style("text-anchor", "start")
@@ -353,10 +368,10 @@ export default function display(weeklyData) {
 
     var controls = d3.select("body").append("div").attr("class","controls").html(`
         <span class="controls__title">view by</span>
-        <div class="controls__options">
-            <span class="controls__option active">release date</span>
+        <div class="controls__options" id="control-viewmodes">
+            <span class="controls__option" id="control-viewmode-release">release date</span>
             |
-            <span class="controls__option">watched date</span>
+            <span class="controls__option" id="control-viewmode-watched" >watched date</span>
         </div>
         <span class="controls__title">filters</span>
         <div class="controls__options">
@@ -365,6 +380,21 @@ export default function display(weeklyData) {
     `);
 
     document.getElementById("control-favorites").addEventListener("click", toggleFavorites);
+    document.getElementById("control-viewmodes").addEventListener("click", (e) => {
+        switch (e.target.id) {
+            case "control-viewmode-release":
+                mode = mode instanceof ReleaseMode ? mode : new ReleaseMode();
+                document.getElementById("control-viewmode-release").classList.add("active");
+                document.getElementById("control-viewmode-watched").classList.remove("active");
+                break;
+            case "control-viewmode-watched":
+                mode = mode instanceof WatchedMode ? mode : new WatchedMode();
+                document.getElementById("control-viewmode-watched").classList.add("active");
+                document.getElementById("control-viewmode-release").classList.remove("active");
+                break;
+            default: 
+        }
+    });
 
     // DETAILS
     //
