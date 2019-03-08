@@ -70,6 +70,12 @@ export default function display(weeklyData) {
         document.getElementById("control-favorites").classList.toggle("active");
     }
 
+    let favSheet = false;
+    window.addEventListener("keydown", (e) => {
+        if (e.key.toUpperCase() == "F") {
+            toggleFavorites();
+        }});
+
     class ReleaseMode {
         getX(d) {
             return xRelease(+d.Year) + innerPaddingXAbsolute/2 + 1;
@@ -216,151 +222,14 @@ export default function display(weeklyData) {
     
     // month for release view
     var monthAxisRelease = d3.axisBottom(xRelease);
-    monthAxisRelease.tickFormat(d3.timeFormat("%Y"));
+    monthAxisRelease.tickFormat(d => "'" + String(d).slice(2));
+    //console.log(xRelease.domain());
 
     // y axis for watched view
     var yAxis = d3.axisLeft(y);
 
     // y axis for release view
     var yAxisRelease = d3.axisLeft(yRelease);
-
-
-
-    // DYNAMIC CODE
-    
-    var topdiv = d3.select("body")
-    .append("div").attr("class", "movies-container");
-
-    var svg = topdiv
-    .append("svg")
-    .attr("class", "movie-svg")
-    .attr("width", mode.getWidth() + margin.left + margin.right)
-    //.attr("height", height + margin.top + margin.bottom)
-    .attr("height", mode.getHeight())
-    .append("g")
-    .attr("transform", 
- //       "translate(" + margin.left + "," + margin.top + ")");
-        "translate(" + margin.left + ", 0)");
-
-    // data.forEach(function(d) {
-    //     d.date = parseDate(d.date);
-    //     d.value = +d.value;
-    // });
-
-    //y.domain([0, d3.max(data, function(d) { return d.weekCount; })]);
-    y.domain(enumToMax(maxFilmCount));
-
-    yRelease.domain(enumToMax(maxReleaseCount));
-
-    let textColor = "#fff";
-
-    let botdiv = d3.select("body")
-        .append("div").attr("class","axis-container");
-    let botsvg = botdiv.append("svg");
-    let yearTicks = botsvg
-        .attr("width", mode.getWidth() + margin.left + margin.right)
-        .attr("height", 150)
-    .append("g")
-    .attr("transform", "translate(" + margin.left + ", 0)");
-
-    let favSheet = false;
-
-    window.addEventListener("keydown", (e) => {
-        if (e.key.toUpperCase() == "F") {
-            toggleFavorites();
-        }});
-
-    setTimeout(function() {
-        // https://stackoverflow.com/questions/9236314/how-do-i-synchronize-the-scroll-position-of-two-divs
-        var isSyncingLeftScroll = false;
-        var isSyncingRightScroll = false;
-        var leftDiv = document.querySelector(".axis-container");
-        var rightDiv = document.querySelector('.movies-container');
-        rightDiv.scrollTop = rightDiv.scrollTopMax;
-        
-        
-        leftDiv.onscroll = function() {
-        if (!isSyncingLeftScroll) {
-            isSyncingRightScroll = true;
-            rightDiv.scrollLeft = this.scrollLeft;
-        }
-        isSyncingLeftScroll = false;
-        }
-        
-        rightDiv.onscroll = function() {
-        if (!isSyncingRightScroll) {
-            isSyncingLeftScroll = true;
-            leftDiv.scrollLeft = this.scrollLeft;
-        }
-        isSyncingRightScroll = false;
-        }
-    }, 300);
-    
-    yearTicks
-    .attr("class", "x axis axis--year")
-    //.attr("transform", "translate(0," + height + ")")
-    .call(mode.getYearAxis())
-    .selectAll("text")
-    .attr("class", "axis__year-ticks")
-    .style("text-anchor", "start")
-    .attr("dx", "-60")
-    .attr("dy", "100")
-    .attr("fill", textColor)
-    //.attr("transform", "rotate(-90)" );
-
-    d3.select(".axis--year .domain")
-    .attr("transform", `translate(0, ${verticalPadding})`);
-
-    let monthTicks = botsvg.append("g")
-                    .attr("transform", "translate(" + margin.left + ", 0)");
-    monthTicks
-    .attr("class", "x axis axis--month")
-    //.attr("transform", "translate(0," + height + ")")
-    .call(mode.getMonthAxis())
-    .selectAll("text")
-    .attr("class", "axis__month-ticks")
-    .style("text-anchor", "start")
-    .attr("dx", "-23")
-    .attr("dy", "65")
-    .attr("fill", textColor)
-    //.attr("transform", "rotate(-90)" );
-
-    monthTicks
-    .selectAll(".axis--month line")
-    .attr("transform", "translate(-23, 10)");
-
-    // svg.append("g")
-    // .attr("class", "y axis")
-    // .call(yAxis)
-    // .append("text")
-    // .attr("transform", "rotate(-90)")
-    // .attr("y", 6)
-    // .attr("dy", ".71em")
-    // .style("text-anchor", "end")
-    // .attr("fill", textColor)
-    // .text("Value ($)");
-
-        ///////////////////////
-    // Tooltips
-    var overlay = svg.append("rect")
-    .attr("class", "overlay")
-    .attr("width", mode.getWidth())
-    .attr("height", mode.getHeight())
-
-    var tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip");
-
-    var focus = svg.append("g")
-    .attr("class", "focus")
-    .style("display", "none");
-
-    focus.append("circle")
-    .attr("r", 4.5)
-
-    focus.append("text")
-    .attr("x", 9)
-    .attr("dy", ".35em")
-    .attr("fill", textColor);
 
     // CONTROLS
     //
@@ -386,11 +255,13 @@ export default function display(weeklyData) {
                 mode = mode instanceof ReleaseMode ? mode : new ReleaseMode();
                 document.getElementById("control-viewmode-release").classList.add("active");
                 document.getElementById("control-viewmode-watched").classList.remove("active");
+                render();
                 break;
             case "control-viewmode-watched":
                 mode = mode instanceof WatchedMode ? mode : new WatchedMode();
                 document.getElementById("control-viewmode-watched").classList.add("active");
                 document.getElementById("control-viewmode-release").classList.remove("active");
+                render();
                 break;
             default: 
         }
@@ -429,95 +300,270 @@ export default function display(weeklyData) {
         d3.select(".details").classed("details--hidden", false);
     }
 
-    // BARS
-    //
-    //
-
-    let bars = svg.selectAll("bar")
-    //.data(data)
-    .data(individualData.filter(d => d.filmCount ? true : null))
-    .enter();
-
-    const highlightClass = "movieTile--highlighted";
-
-    let gs = bars.append("g")
-    // + 1 because it seeems offf
-    .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getY(d)})`);
+    setTimeout(function() {
+        // https://stackoverflow.com/questions/9236314/how-do-i-synchronize-the-scroll-position-of-two-divs
+        var isSyncingLeftScroll = false;
+        var isSyncingRightScroll = false;
+        var leftDiv = document.querySelector(".axis-container");
+        var rightDiv = document.querySelector('.movies-container');
+        rightDiv.scrollTop = rightDiv.scrollTopMax;
         
-    gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
-        : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
-    //.style("fill", "steelblue")
-    .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
-    .attr("width", mode.getBandwidth())
-    .attr("height", mode.getBandheight())
-    .attr("xlink:href", function(d) { return d.Poster ? d.Poster : null})
-    .attr("fill", function(d) {return d.Poster ? null : "grey"})
-    .on('mouseover', function(d) {
-        // focus.attr("transform", "translate(" + x(formatDate.parse(tar_date)) + ","+y(tar_value)+ ")");
-        //focus.attr("transform", "translate(" + x(d.week) + "," + height - y(d.weekCount)+ ")");
-        let ttoffsetx = 0;
-        let ttoffsety = -100;
-        this.classList.toggle(highlightClass);
-
-        tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.Title}`)
-        .style("visibility", "visible")
-        // .style("top", d3.mouse(this)[1] - (tooltip[0][0].clientHeight - 30) + "px")
-        // .style("left", d3.mouse(this)[0] - (tooltip[0][0].clientWidth / 2.0) + "px");
-
-        .style("top", d3.mouse(document.querySelector('body'))[1] + ttoffsety + "px")
-        .style("left", d3.mouse(document.querySelector('body'))[0] + ttoffsetx + "px");
-
-        //d3.select(this).style("fill", "rgb(255,255,0)");
-    })
-    .on('mouseout', function(d) {
-        //d3.select(this).style("fill", "steelblue");
-        this.classList.toggle(highlightClass);
-    })
-    .on('click', (d) => {
-
-        // open overlay
-        openOverlay();
         
-        const timeFadeOut = 350;
-        const detailsContent = d3.select(".details__content");
-        // if not hidden, do fadeout
-        if (!d3.select(".details").classed("details--hidden")) {
-            detailsContent.classed("fading-out", true);
-            setTimeout(() => {
-                changeDetailsContent();
-                detailsContent.classed("fading-out", false)
-            }, timeFadeOut);
+        leftDiv.onscroll = function() {
+        if (!isSyncingLeftScroll) {
+            isSyncingRightScroll = true;
+            rightDiv.scrollLeft = this.scrollLeft;
         }
-
-        // fill overlay
-        function changeDetailsContent() {
-            d3.select(".details__img").attr("src", d.Poster);
-            d3.select(".details__props__title").text(d.Title);
-            d3.select(".details__props__facts").html(`${d.Year}<br>${d.Genre}`)
-            d3.select(".details__plot").text(d.Plot);
-            d3.select(".details__comment").text(d.Comment);
-            d3.select(".details__links__imdb")
-                .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
-                .attr("target", "_blank");
+        isSyncingLeftScroll = false;
         }
+        
+        rightDiv.onscroll = function() {
+        if (!isSyncingRightScroll) {
+            isSyncingLeftScroll = true;
+            leftDiv.scrollLeft = this.scrollLeft;
+        }
+        isSyncingRightScroll = false;
+        }
+    }, 300);
 
-        // let colors = null;
-        // colors = colorThief.getColor(document.querySelector('.details__img'));
-        // setTimeout(() => {
-        //     colors = colorThief.getColor(document.querySelector('.details__img'))
-        //     console.log(colors);
+    const containers = ["movies-container", "axis-container"];
+
+    const lastFilter = individualData.filter(d => d.filmCount && d.releaseCount ? true : null);
+
+    render();
+
+    // DYNAMIC CODE
+
+    function render() {
+        d3.select("body")
+        .selectAll(containers.map(c => '.' + c).join())
+        .data(containers)
+        .enter()
+        .append("div")
+        .attr("class", d => d);
+
+        var topdiv = d3.select(".movies-container");
+
+        var svg;
+        if (document.querySelector(".movie-svg > g")) {
+            let oldMovieSvg = d3.select(".movie-svg");
+            oldMovieSvg.attr("width", mode.getWidth() + margin.left + margin.right)
+            //.attr("height", height + margin.top + margin.bottom)
+            .attr("height", mode.getHeight());
+            svg = oldMovieSvg.select("g");
+        } else {
+            svg = topdiv
+            .append("svg")
+            .attr("class", "movie-svg")
+            .attr("width", mode.getWidth() + margin.left + margin.right)
+            //.attr("height", height + margin.top + margin.bottom)
+            .attr("height", mode.getHeight())
+            .append("g")
+            .attr("transform", 
+         //       "translate(" + margin.left + "," + margin.top + ")");
+                "translate(" + margin.left + ", 0)");
+        }
+        
+        // data.forEach(function(d) {
+        //     d.date = parseDate(d.date);
+        //     d.value = +d.value;
+        // });
     
-        //     if (colors) {
-        //         d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${colors.join(',')}), #000 90%)`);
-        //     }
-        // }, 20);
- 
-    })
-    gs.filter(d => d.Favorite === "checked").append("image")
-        .attr("x", "-15")
-        .attr("y", "-4")
-        .attr("transform", "translate(0,0)")
-        .attr("width", "35").attr("height", "35")
-        //.attr("class", "movieTile__favorite")
-        .attr('xlink:href', flashIcon);
+        //y.domain([0, d3.max(data, function(d) { return d.weekCount; })]);
+        y.domain(enumToMax(maxFilmCount));
+    
+        yRelease.domain(enumToMax(maxReleaseCount));
+    
+        let textColor = "#fff";
+
+        // reset axes
+        d3.selectAll(".axis-container > svg").remove();
+    
+        let botdiv = d3.select(".axis-container");
+        let botsvg = botdiv.append("svg");
+        let yearTicks = botsvg
+            .attr("width", mode.getWidth() + margin.left + margin.right)
+            .attr("height", 150)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + ", 0)");
+        
+        yearTicks
+        .attr("class", "x axis axis--year")
+        //.attr("transform", "translate(0," + height + ")")
+        .call(mode.getYearAxis())
+        .selectAll("text")
+        .attr("class", "axis__year-ticks")
+        .style("text-anchor", "start")
+        .attr("dx", "-60")
+        .attr("dy", "100")
+        .attr("fill", textColor)
+        //.attr("transform", "rotate(-90)" );
+    
+        d3.select(".axis--year .domain")
+        .attr("transform", `translate(0, ${verticalPadding})`);
+    
+        let monthTicks = botsvg.append("g")
+                        .attr("transform", "translate(" + margin.left + ", 0)");
+        monthTicks
+        .attr("class", "x axis axis--month")
+        //.attr("transform", "translate(0," + height + ")")
+        .call(mode.getMonthAxis())
+        .selectAll("text")
+        .attr("class", "axis__month-ticks")
+        .style("text-anchor", "start")
+        .attr("dx", "-23")
+        .attr("dy", "65")
+        .attr("fill", textColor)
+        //.attr("transform", "rotate(-90)" );
+    
+        monthTicks
+        .selectAll(".axis--month line")
+        .attr("transform", "translate(-23, 10)");
+    
+        // svg.append("g")
+        // .attr("class", "y axis")
+        // .call(yAxis)
+        // .append("text")
+        // .attr("transform", "rotate(-90)")
+        // .attr("y", 6)
+        // .attr("dy", ".71em")
+        // .style("text-anchor", "end")
+        // .attr("fill", textColor)
+        // .text("Value ($)");
+    
+            ///////////////////////
+        // Tooltips
+
+        // reset tooltips 
+        svg.select(".rect").remove();
+
+        var overlay = 
+        svg.append("rect")
+        .attr("class", "overlay")
+        .attr("width", mode.getWidth())
+        .attr("height", mode.getHeight())
+    
+        var tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip");
+    
+        var focus = svg.append("g")
+        .attr("class", "focus")
+        .style("display", "none");
+    
+        focus.append("circle")
+        .attr("r", 4.5)
+    
+        focus.append("text")
+        .attr("x", 9)
+        .attr("dy", ".35em")
+        .attr("fill", textColor);
+    
+        // BARS
+        //
+        //
+
+        const highlightClass = "movieTile--highlighted";
+        
+    
+        let barsUpdate = svg.selectAll("g")
+        //.data(data)
+        // TODO check is mode dependent
+        .data(lastFilter)
+        console.log("Update size: ", barsUpdate.size());
+        
+
+        let bars = barsUpdate.enter();
+        console.log("Enter size: ", bars.size());
+    
+        let gs = bars.append("g");
+        gs.merge(barsUpdate)
+        // + 1 because it seeems offf
+        .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getY(d)})`);
+            
+        // enter for creation
+        gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
+            : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
+        //.style("fill", "steelblue")
+        // merge for location updates
+        .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
+        .attr("width", mode.getBandwidth())
+        .attr("height", mode.getBandheight())
+        .attr("xlink:href", function(d) { return d.Poster ? d.Poster : null})
+        .attr("fill", function(d) {return d.Poster ? null : "grey"})
+        .on('mouseover', function(d) {
+            // focus.attr("transform", "translate(" + x(formatDate.parse(tar_date)) + ","+y(tar_value)+ ")");
+            //focus.attr("transform", "translate(" + x(d.week) + "," + height - y(d.weekCount)+ ")");
+            let ttoffsetx = 0;
+            let ttoffsety = -100;
+            this.classList.toggle(highlightClass);
+    
+            tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.Title}`)
+            .style("visibility", "visible")
+            // .style("top", d3.mouse(this)[1] - (tooltip[0][0].clientHeight - 30) + "px")
+            // .style("left", d3.mouse(this)[0] - (tooltip[0][0].clientWidth / 2.0) + "px");
+    
+            .style("top", d3.mouse(document.querySelector('body'))[1] + ttoffsety + "px")
+            .style("left", d3.mouse(document.querySelector('body'))[0] + ttoffsetx + "px");
+    
+            //d3.select(this).style("fill", "rgb(255,255,0)");
+        })
+        .on('mouseout', function(d) {
+            //d3.select(this).style("fill", "steelblue");
+            this.classList.toggle(highlightClass);
+        })
+        .on('click', (d) => {
+    
+            // open overlay
+            openOverlay();
+            
+            const timeFadeOut = 350;
+            const detailsContent = d3.select(".details__content");
+            // if not hidden, do fadeout
+            if (!d3.select(".details").classed("details--hidden")) {
+                detailsContent.classed("fading-out", true);
+                setTimeout(() => {
+                    changeDetailsContent();
+                    detailsContent.classed("fading-out", false)
+                }, timeFadeOut);
+            }
+    
+            // fill overlay
+            function changeDetailsContent() {
+                d3.select(".details__img").attr("src", d.Poster);
+                d3.select(".details__props__title").text(d.Title);
+                d3.select(".details__props__facts").html(`${d.Year}<br>${d.Genre}`)
+                d3.select(".details__plot").text(d.Plot);
+                d3.select(".details__comment").text(d.Comment);
+                d3.select(".details__links__imdb")
+                    .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
+                    .attr("target", "_blank");
+            }
+    
+            // let colors = null;
+            // colors = colorThief.getColor(document.querySelector('.details__img'));
+            // setTimeout(() => {
+            //     colors = colorThief.getColor(document.querySelector('.details__img'))
+            //     console.log(colors);
+        
+            //     if (colors) {
+            //         d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${colors.join(',')}), #000 90%)`);
+            //     }
+            // }, 20);
+     
+        });
+
+        gs.filter(d => d.Favorite === "checked").append("image")
+            .attr("x", "-15")
+            .attr("y", "-4")
+            .attr("transform", "translate(0,0)")
+            .attr("width", "35").attr("height", "35")
+            //.attr("class", "movieTile__favorite")
+            .attr('xlink:href', flashIcon);
+
+        if (mode instanceof ReleaseMode) {
+            let movieCont = document.querySelector(".movies-container");
+            movieCont.scrollTop = movieCont.scrollTopMax;
+        }
+    }
 }
+

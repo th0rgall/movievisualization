@@ -208,10 +208,13 @@ body {
 
   .axis-container {
     height: 150px;
+    flex: 0 1 auto;
   }
+  
 
   .movies-container {
-    flex: 1 0 0; // grow
+    flex: 0 10 auto; // TODO: WHY does this work? (
+    // combo with axis above - content here grows & shrinks
     overflow-y: scroll;
     scrollbar-width: none;
 
