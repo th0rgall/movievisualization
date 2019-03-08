@@ -252,20 +252,28 @@ export default function display(weeklyData) {
     document.getElementById("control-viewmodes").addEventListener("click", (e) => {
         switch (e.target.id) {
             case "control-viewmode-release":
-                mode = mode instanceof ReleaseMode ? mode : new ReleaseMode();
-                document.getElementById("control-viewmode-release").classList.add("active");
-                document.getElementById("control-viewmode-watched").classList.remove("active");
-                render();
+                setReleaseMode();
                 break;
             case "control-viewmode-watched":
-                mode = mode instanceof WatchedMode ? mode : new WatchedMode();
-                document.getElementById("control-viewmode-watched").classList.add("active");
-                document.getElementById("control-viewmode-release").classList.remove("active");
-                render();
-                break;
+                setWatchedMode();
+                break
             default: 
         }
     });
+
+    function setReleaseMode() {
+        mode = mode instanceof ReleaseMode ? mode : new ReleaseMode();
+        document.getElementById("control-viewmode-release").classList.add("active");
+        document.getElementById("control-viewmode-watched").classList.remove("active");
+        render();
+    }
+
+    function setWatchedMode() {
+        mode = mode instanceof WatchedMode ? mode : new WatchedMode();
+        document.getElementById("control-viewmode-watched").classList.add("active");
+        document.getElementById("control-viewmode-release").classList.remove("active");
+        render();
+    }
 
     // DETAILS
     //
@@ -330,7 +338,8 @@ export default function display(weeklyData) {
 
     const lastFilter = individualData.filter(d => d.filmCount && d.releaseCount ? true : null);
 
-    render();
+    // initial render via first mode set
+    setReleaseMode();
 
     // DYNAMIC CODE
 
