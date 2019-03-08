@@ -477,6 +477,8 @@ export default function display(weeklyData) {
     
         let gs = bars.append("g");
         gs.merge(barsUpdate)
+        .transition()
+        .duration(3000)
         // + 1 because it seeems offf
         .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getY(d)})`);
             
@@ -560,9 +562,13 @@ export default function display(weeklyData) {
             //.attr("class", "movieTile__favorite")
             .attr('xlink:href', flashIcon);
 
+        // scroll resets
+        let movieCont = document.querySelector(".movies-container");
         if (mode instanceof ReleaseMode) {
-            let movieCont = document.querySelector(".movies-container");
             movieCont.scrollTop = movieCont.scrollTopMax;
+            movieCont.scrollLeft = movieCont.scrollLeftMax;
+        } else if (mode instanceof WatchedMode) {
+            movieCont.scrollLeft = movieCont.scrollLeftMax;
         }
     }
 }
