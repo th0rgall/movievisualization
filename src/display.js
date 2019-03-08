@@ -72,8 +72,16 @@ export default function display(weeklyData) {
 
     let favSheet = false;
     window.addEventListener("keydown", (e) => {
-        if (e.key.toUpperCase() == "F") {
-            toggleFavorites();
+        switch (e.key.toUpperCase()) {
+            case "F":
+                toggleFavorites();
+                break;
+            case "W":
+                setWatchedMode();
+                break;
+            case "R":
+                setReleaseMode();
+                break;
         }});
 
     class ReleaseMode {
