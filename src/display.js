@@ -82,6 +82,9 @@ export default function display(weeklyData) {
             case "R":
                 setReleaseMode();
                 break;
+            case "ESCAPE":
+                toggleOverlay();
+                break;
         }});
 
     class ReleaseMode {
@@ -192,10 +195,12 @@ export default function display(weeklyData) {
 
     // watched mode
     var y = d3.scaleBand().rangeRound([height, 0]).paddingInner(innerPaddingY);
+    y.domain(enumToMax(maxFilmCount));
 
     // release mode
     var yRelease = d3.scaleBand().rangeRound([releaseHeight, 0]).paddingInner(innerPaddingY);
-
+    yRelease.domain(enumToMax(maxReleaseCount));
+    
     // yearAxis for watched date
     var yearAxis= d3.axisBottom(x);
     yearAxis.tickFormat(d3.timeFormat("%Y"));
@@ -289,17 +294,24 @@ export default function display(weeklyData) {
 
     var details = d3.select("body").append("div").attr("class", "details side details--hidden").html(`
         <div class="details__content">
-            <div class="details__close"></div>
+            <div class="details__close">
+                <svg enable-background="new 0 0 100 100" version="1.1" viewBox="0 0 100 125" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"><polygon points="82.2 11.5 49.7 44 17.2 11.5 10.8 17.8 43.3 50.3 10.8 82.8 17.2 89.2 49.7 56.7 82.2 89.2 88.5 82.8 56 50.3 88.5 17.8"/></svg>
+            </div>
             <div class="details__top">
                 <img class="details__img"/>
                 <div class="details__props">
                     <h2 class="details__props__title"></h2>
+                    <div class="details__props__year"></div>
                     <p class="details__props__facts"></p>
                 </div>
             </div>
             <div class="details__bottom">
+                <h3 class="details__text-title">Plot</h3>
                 <p class="details__plot"></p>
-                <p class="details__comment"></p>
+                <div id="movie-comment">
+                    <h3 class="details__text-title">Comment</h3>
+                    <p class="details__comment"></p>
+                </div>
                 <a class="details__links details__links__imdb">More on <img src="${imdbLogo}"/></a>
             </div>
         </div>
@@ -346,12 +358,19 @@ export default function display(weeklyData) {
 
     const lastFilter = individualData.filter(d => d.filmCount && d.releaseCount ? true : null);
 
+    // STATIC SVG SETUP
+
+    // Tooltips
+    var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip");
+
     // initial render via first mode set
     setReleaseMode();
 
     // DYNAMIC CODE
 
     function render() {
+
         d3.select("body")
         .selectAll(containers.map(c => '.' + c).join())
         .data(containers)
@@ -362,12 +381,14 @@ export default function display(weeklyData) {
         var topdiv = d3.select(".movies-container");
 
         var svg;
+        // select old svg
         if (document.querySelector(".movie-svg > g")) {
             let oldMovieSvg = d3.select(".movie-svg");
             oldMovieSvg.attr("width", mode.getWidth() + margin.left + margin.right)
             //.attr("height", height + margin.top + margin.bottom)
             .attr("height", mode.getHeight());
             svg = oldMovieSvg.select("g");
+        // create new one
         } else {
             svg = topdiv
             .append("svg")
@@ -381,21 +402,12 @@ export default function display(weeklyData) {
                 "translate(" + margin.left + ", 0)");
         }
         
-        // data.forEach(function(d) {
-        //     d.date = parseDate(d.date);
-        //     d.value = +d.value;
-        // });
-    
-        //y.domain([0, d3.max(data, function(d) { return d.weekCount; })]);
-        y.domain(enumToMax(maxFilmCount));
-    
-        yRelease.domain(enumToMax(maxReleaseCount));
-    
         let textColor = "#fff";
 
         // reset axes
         d3.selectAll(".axis-container > svg").remove();
-    
+
+        // recreate axes
         let botdiv = d3.select(".axis-container");
         let botsvg = botdiv.append("svg");
         let yearTicks = botsvg
@@ -447,34 +459,7 @@ export default function display(weeklyData) {
         // .style("text-anchor", "end")
         // .attr("fill", textColor)
         // .text("Value ($)");
-    
-            ///////////////////////
-        // Tooltips
 
-        // reset tooltips 
-        svg.select(".rect").remove();
-
-        var overlay = 
-        svg.append("rect")
-        .attr("class", "overlay")
-        .attr("width", mode.getWidth())
-        .attr("height", mode.getHeight())
-    
-        var tooltip = d3.select("body").append("div")
-        .attr("class", "tooltip");
-    
-        var focus = svg.append("g")
-        .attr("class", "focus")
-        .style("display", "none");
-    
-        focus.append("circle")
-        .attr("r", 4.5)
-    
-        focus.append("text")
-        .attr("x", 9)
-        .attr("dy", ".35em")
-        .attr("fill", textColor);
-    
         // BARS
         //
         //
@@ -488,21 +473,21 @@ export default function display(weeklyData) {
         .data(lastFilter)
         console.log("Update size: ", barsUpdate.size());
         
-
         let bars = barsUpdate.enter();
         console.log("Enter size: ", bars.size());
     
         let gs = bars.append("g");
-        gs.merge(barsUpdate)
+        let mergers = gs.merge(barsUpdate)
+        .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getHeight()/3})`);
+        mergers
         .transition()
-        .duration(3000)
+        .duration(2000)
         // + 1 because it seeems offf
         .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getY(d)})`);
             
         // enter for creation
         gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
             : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
-        //.style("fill", "steelblue")
         // merge for location updates
         .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
         .attr("width", mode.getBandwidth())
@@ -510,24 +495,16 @@ export default function display(weeklyData) {
         .attr("xlink:href", function(d) { return d.Poster ? d.Poster : null})
         .attr("fill", function(d) {return d.Poster ? null : "grey"})
         .on('mouseover', function(d) {
-            // focus.attr("transform", "translate(" + x(formatDate.parse(tar_date)) + ","+y(tar_value)+ ")");
-            //focus.attr("transform", "translate(" + x(d.week) + "," + height - y(d.weekCount)+ ")");
             let ttoffsetx = 0;
             let ttoffsety = -100;
             this.classList.toggle(highlightClass);
     
             tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.Title}`)
             .style("visibility", "visible")
-            // .style("top", d3.mouse(this)[1] - (tooltip[0][0].clientHeight - 30) + "px")
-            // .style("left", d3.mouse(this)[0] - (tooltip[0][0].clientWidth / 2.0) + "px");
-    
             .style("top", d3.mouse(document.querySelector('body'))[1] + ttoffsety + "px")
             .style("left", d3.mouse(document.querySelector('body'))[0] + ttoffsetx + "px");
-    
-            //d3.select(this).style("fill", "rgb(255,255,0)");
         })
         .on('mouseout', function(d) {
-            //d3.select(this).style("fill", "steelblue");
             this.classList.toggle(highlightClass);
         })
         .on('click', (d) => {
@@ -550,9 +527,15 @@ export default function display(weeklyData) {
             function changeDetailsContent() {
                 d3.select(".details__img").attr("src", d.Poster);
                 d3.select(".details__props__title").text(d.Title);
-                d3.select(".details__props__facts").html(`${d.Year}<br>${d.Genre}`)
+                d3.select(".details__props__year").text(d.Year);
+                d3.select(".details__props__facts").html(`${d.Genre}`).attr("title", d.Genre);
                 d3.select(".details__plot").text(d.Plot);
-                d3.select(".details__comment").text(d.Comment);
+                if (d.Comment.length) {
+                    document.getElementById("movie-comment").classList.remove("hidden");
+                    d3.select(".details__comment").text(d.Comment);
+                } else {
+                    document.getElementById("movie-comment").classList.add("hidden");
+                }
                 d3.select(".details__links__imdb")
                     .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
                     .attr("target", "_blank");
