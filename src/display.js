@@ -540,18 +540,9 @@ export default function display(weeklyData) {
                     .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
                     .attr("target", "_blank");
             }
-    
-            // let colors = null;
-            // colors = colorThief.getColor(document.querySelector('.details__img'));
-            // setTimeout(() => {
-            //     colors = colorThief.getColor(document.querySelector('.details__img'))
-            //     console.log(colors);
-        
-            //     if (colors) {
-            //         d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${colors.join(',')}), #000 90%)`);
-            //     }
-            // }, 20);
-     
+            if (d.Color) {
+                d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${d.Color.join(',')}), #000 90%)`);
+            }
         });
 
         gs.filter(d => d.Favorite === "checked").append("image")

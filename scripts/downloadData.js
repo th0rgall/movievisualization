@@ -7,22 +7,57 @@ const zip = require('lodash.zip');
 const ColorThief = require('color-thief-jimp');
 const Jimp = require('jimp');
 
+// configuration
+const alwaysColorDownload = false;
+
 async function getColorFromUrl(imgUrl) {
     return await Jimp.read(imgUrl).then((sourceImage) => {
-        // if (err) {
-        //     console.error(err);
-        //     return '#000000';
-        // }
 
-        console.log(`Downloaded: ${imgUrl}`);
-        return ColorThief.getColor(sourceImage);
-    });
+        const values = ColorThief.getColor(sourceImage);
+
+        /* 
+            I want poppy colors. The library doesn't seem to do this:
+            sometimes if 10% is black and 90% yellow, then it will return black
+        */
+
+        // largest r, g or b is smaller than 25: it's a pretty dark color 
+        if (max(values) < 30) {
+            // find the most poppy color yourself
+            const valuesArray = ColorThief.getPalette(sourceImage, 6);
+            return valuesArray.reduce((acc, el) => 
+                    variance(el) > variance(acc) ? el : acc, values);
+        } else {
+            return values;
+        }
+    })
 }
 
 safePromiseWrapper = promise => 
     new Promise((resolve, reject) => {
-        promise.then(resolve).catch(e => {console.log("PROMISE WAS REJECTED:\n" + e.toString()); resolve(null)});
+        promise.then(resolve).catch(e => {console.log("PROMISE WAS REJECTED (no problem, this movie will be ignored):\n" + e.toString()); resolve(null)});
     });
+
+// basic statistical utility functions
+function sum(array) {
+    var num = 0;
+    for (var i = 0, l = array.length; i < l; i++) num += array[i];
+    return num;
+}
+
+function mean(array) {
+    return sum(array) / array.length;
+}
+
+function variance(array) {
+    const meanVal = mean(array);
+    return mean(array.map(function(num) {
+        return Math.pow(num - meanVal, 2);
+    }));
+}
+
+function max(array) {
+    return Math.max.apply(null, array);
+}
 
 const defaultPath = 'data/movies-airtable.json';
 const defaultOut = 'dist/movies.json';
@@ -49,6 +84,7 @@ const moviesAirtableFiltered = moviesAirtable.filter(e =>
 const moviesToRequest = [];
 // promises for existing json movies
 let newMovies = [];
+let updateCount = 0;
 
 moviesAirtableFiltered.forEach((airMovie) => {
     // inefficient matching of airMovien and jsonMovie based on their original Title
@@ -66,9 +102,11 @@ moviesAirtableFiltered.forEach((airMovie) => {
             || (airMovie.Comment && foundMovie.Comment && airMovie.Comment !== foundMovie.Comment) // comment changed
             || (airMovie.Favorite && !foundMovie.Favorite)
             || (!airMovie.Favorite && foundMovie.Favorite)
-            || !foundMovie.Color // no color available
+            || (alwaysColorDownload || !foundMovie.Color) // no color available
+            // TODO: type might also change
         ) {
             newMovies.push(merge(airMovie, foundMovie));
+            updateCount++;
         } else {
             // else: assume all is OK
             newMovies.push(Promise.resolve(foundMovie));
@@ -89,7 +127,7 @@ function merge(airMovie, jsonMovie) {
             Favorite
         };
 
-        if (!jsonMovie.Color) {
+        if (alwaysColorDownload || !jsonMovie.Color) {
             getColor(jsonMovie)
                 .then(colorValues => {
                     resolve({...out, Color: colorValues});
@@ -120,7 +158,7 @@ Promise.all(requests
         // filter out errored movies
         const filtered = apiMovies.filter(Boolean);
         const countB = filtered.length;
-        const zipped = zip(moviesToRequest, apiMovies)
+        const promised = zip(moviesToRequest, apiMovies)
             // pure wizard object destructuring
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
             .map(([{"Date": airDate, "Title": airTitle, Comment, Favorite}, omdbData]) => (
@@ -128,11 +166,13 @@ Promise.all(requests
                     omdbData.Title : airTitle, airTitle, Comment, Favorite, ...omdbData}))
             // TODO: debugged very long for this one... Promise.resolve has to be bound to promise...
             .map(Promise.resolve.bind(Promise));
-            
+
         Promise.all([...newMovies, ...promised].map(safePromiseWrapper)).then(
             (finalMovies) => {
                 fs.writeFile(defaultOut, JSON.stringify(finalMovies), {encoding: 'utf8'}, 
-                    err => console.log(err ? err : `omdb data downloaded for ${countB} of ${countA} new movies.`)
+                    err => console.log(err ? err : 
+                        `omdb data downloaded for ${countB} new movies. ${countA} not found.
+                        ${updateCount} comments/favs updated.`)
                 );
             }
         );
