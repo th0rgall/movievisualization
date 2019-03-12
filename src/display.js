@@ -111,6 +111,15 @@ export default function display(weeklyData) {
             return releaseHeight;
         }
 
+        // TODO: should have similar extra height logic
+        getOuterHeight() {
+            return this.getHeight();
+        }
+
+        getInitialY() {
+            return this.getHeight()/3;
+        }
+
         getBandheight() {
             return yRelease.bandwidth();
         }
@@ -134,7 +143,7 @@ export default function display(weeklyData) {
         }
 
         getY(d) {
-            return y(d.filmCount);
+            return y(d.filmCount) + extraHeight;
         }
         
         getBandwidth() {
@@ -147,6 +156,14 @@ export default function display(weeklyData) {
 
         getHeight() {
             return height;
+        }
+
+        getOuterHeight() {
+            return height + extraHeight;
+        }
+
+        getInitialY() {
+            return -tileHeight * 1.5;
         }
         
         getBandheight() {
@@ -206,6 +223,8 @@ export default function display(weeklyData) {
     let maxReleaseCount = d3.max(deduplicatedData.map(f => f.releaseCount)); // todo: can be computed simult.
     let releaseHeight = tileHeight * maxReleaseCount + verticalPadding * (maxReleaseCount - 1);
     let height = tileHeight * maxFilmCount + verticalPadding * (maxFilmCount - 1);
+    // 150 is axis height
+    let extraHeight = height > window.innerHeight - 150 ? 0 : window.innerHeight - 150 - height;
 
     // Parse the date / time
     var	parseDate = d3.timeFormat("%Y-%m").parse;
@@ -277,7 +296,7 @@ export default function display(weeklyData) {
         </div>
         <span class="controls__title">filters</span>
         <div class="controls__options">
-            <span class="controls__option" id="control-favorites">only favorites</span>
+            <span class="controls__option" id="control-favorites">highlight favorites</span>
         </div>
     `);
 
@@ -407,7 +426,7 @@ export default function display(weeklyData) {
             let oldMovieSvg = d3.select(".movie-svg");
             oldMovieSvg.attr("width", mode.getWidth() + margin.left + margin.right)
             //.attr("height", height + margin.top + margin.bottom)
-            .attr("height", mode.getHeight());
+            .attr("height", mode.getOuterHeight());
             svg = oldMovieSvg.select("g");
         // create new one
         } else {
@@ -486,7 +505,6 @@ export default function display(weeklyData) {
         //
 
         const highlightClass = "movieTile--highlighted";
-        
     
         let barsUpdate = svg.selectAll("g")
         //.data(data)
@@ -502,7 +520,7 @@ export default function display(weeklyData) {
     
         let gs = bars.append("g");
         let mergers = gs.merge(barsUpdate)
-        .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getHeight()/3})`);
+        .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getInitialY()})`);
         mergers
         .transition()
         .duration(2000)
@@ -514,6 +532,7 @@ export default function display(weeklyData) {
             : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
         // merge for location updates
         .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
+        // TODO: these are only used at .enter time. Should also be in update? Maybe with a d3.selectAll
         .attr("width", mode.getBandwidth())
         .attr("height", mode.getBandheight())
         .attr("xlink:href", function(d) { return d.Poster ? d.Poster : null})
