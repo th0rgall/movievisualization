@@ -8,6 +8,7 @@ const colorThief = new ColorThief();
 export default function display(weeklyData) {
 
     // STATIC CODE
+    weeklyData = weeklyData.sort((a,b) => b - a);
 
     let toIndividualData = (weeklydata) => {
         return weeklydata.reduce((acc, c, i, arr) => {
@@ -88,6 +89,10 @@ export default function display(weeklyData) {
         }});
 
     class ReleaseMode {
+        getData() {
+            return deduplicatedData;
+        }
+
         getX(d) {
             return xRelease(+d.Year) + innerPaddingXAbsolute/2 + 1;
         }
@@ -122,6 +127,10 @@ export default function display(weeklyData) {
     }
 
     class WatchedMode {
+        getData() {
+            return individualData;
+        }
+
         getX(d) {
             return x(d.week);
         }
@@ -158,17 +167,30 @@ export default function display(weeklyData) {
     // viewMode = release | watched
     let mode = new WatchedMode();
 
-    let individualData = releaseCount(toIndividualData(weeklyData));
+    let individualData = 
+        toIndividualData(weeklyData)
+        .filter(d => d.filmCount ? true : null)
+        .sort((a,b) => a.Title.localeCompare(b.Title));
+
+    let deduplicatedData = [];
+    for (let i = 0; i < individualData.length; i++) {
+        if (i == individualData.length - 1 || individualData[i].Title !== individualData[i+1].Title) {
+            deduplicatedData.push(individualData[i]);
+        }
+    }
+    deduplicatedData = releaseCount(deduplicatedData);
+
     
     const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
     const innerPaddingX = 0.30;
     const innerPaddingY = 0.15;
     const tileWidth = 52;
-    const ext = d3.extent(individualData.map(d => Number(d.Year)));
+    const ext = d3.extent(deduplicatedData.map(d => Number(d.Year)));
     const no = ext[1] - ext[0];
     const innerPaddingXAbsolute = tileWidth * innerPaddingX; 
     const tileWithOneSidePadding = tileWidth * ( 1 + innerPaddingX);
     const releaseWidth =  tileWithOneSidePadding * no - (2 * innerPaddingXAbsolute);
+    // todo weeklydata.length might be filtered later on
     const width = (tileWidth * ( 1 + innerPaddingX)) * weeklyData.length;
 
     // domain for watched view
@@ -183,7 +205,7 @@ export default function display(weeklyData) {
     const tileHeight = tileWidth * posterRatio;
     const verticalPadding = tileHeight * innerPaddingY; 
     let maxFilmCount = d3.max(individualData.map(f => f.filmCount));
-    let maxReleaseCount = d3.max(individualData.map(f => f.releaseCount)); // todo: can be computed simult.
+    let maxReleaseCount = d3.max(deduplicatedData.map(f => f.releaseCount)); // todo: can be computed simult.
     let releaseHeight = tileHeight * maxReleaseCount + verticalPadding * (maxReleaseCount - 1);
     let height = tileHeight * maxFilmCount + verticalPadding * (maxFilmCount - 1);
 
@@ -356,8 +378,6 @@ export default function display(weeklyData) {
 
     const containers = ["movies-container", "axis-container"];
 
-    const lastFilter = individualData.filter(d => d.filmCount && d.releaseCount ? true : null);
-
     // STATIC SVG SETUP
 
     // Tooltips
@@ -470,9 +490,12 @@ export default function display(weeklyData) {
         let barsUpdate = svg.selectAll("g")
         //.data(data)
         // TODO check is mode dependent
-        .data(lastFilter)
+        .data(mode.getData())
         console.log("Update size: ", barsUpdate.size());
         
+        // remove old ones (duplicates like series when coming from watched view, or movies seen twice)
+        barsUpdate.exit().remove();
+
         let bars = barsUpdate.enter();
         console.log("Enter size: ", bars.size());
     
