@@ -8,8 +8,6 @@ const colorThief = new ColorThief();
 export default function display(weeklyData) {
 
     // STATIC CODE
-    weeklyData = weeklyData.sort((a,b) => b - a);
-
     let toIndividualData = (weeklydata) => {
         return weeklydata.reduce((acc, c, i, arr) => {
 
@@ -178,9 +176,9 @@ export default function display(weeklyData) {
             deduplicatedData.push(individualData[i]);
         }
     }
+
     deduplicatedData = releaseCount(deduplicatedData);
 
-    
     const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
     const innerPaddingX = 0.30;
     const innerPaddingY = 0.15;
@@ -393,6 +391,9 @@ export default function display(weeklyData) {
 
         d3.select("body")
         .selectAll(containers.map(c => '.' + c).join())
+        // key function necessary for intuitive enter/exits 
+        // assumes that no title is watched twice in the same week
+        // watchedDate safeguard in case available (same problem with day)
         .data(containers)
         .enter()
         .append("div")
@@ -490,7 +491,7 @@ export default function display(weeklyData) {
         let barsUpdate = svg.selectAll("g")
         //.data(data)
         // TODO check is mode dependent
-        .data(mode.getData())
+        .data(mode.getData(), d => `${d.Title}+${d.week}+${d.watchedDate ? d.watchedDate : ""}`)
         console.log("Update size: ", barsUpdate.size());
         
         // remove old ones (duplicates like series when coming from watched view, or movies seen twice)
