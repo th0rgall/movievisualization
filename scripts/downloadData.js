@@ -6,6 +6,36 @@ const fs = require('fs');
 const zip = require('lodash.zip');
 const ColorThief = require('color-thief-jimp');
 const Jimp = require('jimp');
+const Airtable = require('airtable');
+const creds = require('./credentials.json');
+
+(async function init() {
+
+const airtableFetcher = new Promise((resolve,reject) => {
+    // get all record airtable ids
+    let airrecords = [];
+    var base = new Airtable({apiKey: creds.airtableKey}).base(creds.airtableBase);
+    base(creds.airtableBaseName).select({
+        // Selecting the first 3 records in Grid view:
+        // maxRecords: 3,
+        view: "Grid view"
+    }).eachPage(function page(records, fetchNextPage) {
+        // This function (`page`) will get called for each page of records.
+        records.forEach(function(record) {
+            console.log('Fetched', record.get('Title'));
+            airrecords.push(record.fields);
+        });
+        // To fetch the next page of records, call `fetchNextPage`.
+        // If there are more records, `page` will get called again.
+        // If there are no more records, `done` will get called.
+        fetchNextPage();
+
+    }, function done(err) {
+        if (err) { console.error(err); return; } else {
+            resolve(airrecords);
+        }
+    });
+});
 
 // configuration
 const alwaysColorDownload = false;
@@ -68,7 +98,8 @@ if (process.argv.length > 2) {
     fpath = path.resolve(process.argv[2]);
 }
 let moviesFile = fs.readFileSync(fpath ? fpath : defaultPath, 'utf8');
-const moviesAirtable = JSON.parse(moviesFile);
+//const moviesAirtable = JSON.parse(moviesFile);
+const moviesAirtable = await airtableFetcher;
 
 // read previous movies
 let oldMovies = JSON.parse(fs.readFileSync('dist/movies.json', 'utf8'));
@@ -102,7 +133,7 @@ moviesAirtableFiltered.forEach((airMovie) => {
             || (airMovie.Comment && foundMovie.Comment && airMovie.Comment !== foundMovie.Comment) // comment changed
             || (airMovie.Favorite && !foundMovie.Favorite)
             || (!airMovie.Favorite && foundMovie.Favorite)
-            || (alwaysColorDownload || !foundMovie.Color) // no color available
+            || (alwaysColorDownload || !foundMovie.Color) // no color available // will try again every time even without image
             // TODO: type might also change
         ) {
             newMovies.push(merge(airMovie, foundMovie));
@@ -172,10 +203,11 @@ Promise.all(requests
             (finalMovies) => {
                 fs.writeFile(defaultOut, JSON.stringify(finalMovies), {encoding: 'utf8'}, 
                     err => console.log(err ? err : 
-                        `omdb data downloaded for ${countB} new movies. ${countA} not found.
-                        ${updateCount} comments/favs updated.`)
+                        `omdb data downloaded for ${countB} new movies. ${countA} not found.`
+                        +`${updateCount} comments/favs updated.`
+                        +`Probably ${oldMovies.length - finalMovies.length} movies deleted.`)
                 );
             }
         );
     });
-
+})();

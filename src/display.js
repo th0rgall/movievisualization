@@ -369,7 +369,7 @@ export default function display(weeklyData) {
         </div>
         <span class="controls__title">filters</span>
         <div class="controls__options">
-            <span class="controls__option" id="control-favorites">highlight favorites</span>
+            <span class="controls__option" id="control-favorites">show favorites only</span>
         </div>
     `);
 
