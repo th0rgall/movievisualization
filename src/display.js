@@ -56,7 +56,8 @@ export default function display(weeklyData) {
             sheet.id = 'fav-sheet';
             sheet.innerHTML = `.movieTile:not(.favorite) {
                 opacity: 0.3;
-                transition: 0.7s;
+                filter: drop-shadow(0 6px 9px rgba(0, 0, 0, 0.5)) blur(4px);
+                transition: all 0.4s;
             }`;
             document.body.appendChild(sheet);
             favSheet = true;
@@ -67,6 +68,60 @@ export default function display(weeklyData) {
         }
 
         document.getElementById("control-favorites").classList.toggle("active");
+    }
+
+    // TODO check is mode dependent
+    // used as css ID selector too, so can't have whitespace or other illegal
+    let keyFunction = d => `${d.Title.slice(0, 7).replace(/\s+|[\.\/>',]/g,"")}-${d.watchedDate ? d.watchedDate.getTime() : ""}`;
+
+    function highlightSelected(d) {
+        const selectedClass = "movieTile--selected";
+        // dehighlight previous
+        selectedNode ? selectedNode.classed(selectedClass, false) : null;
+        // highligh next
+        selectedNode = d3.select("#" + keyFunction(d));
+        selectedNode ? selectedNode.classed("movieTile--selected", true) : null;
+    }
+
+    function goToNext() {
+        const data = mode.getData();
+        /* TODO there is a bug: it doesn't know what the last favorite is
+         just stops at the last non-favorite
+         skip indexes until next favorite
+         solution: skip on a second, seperata variable. 
+         Only transfer back to real one if a non-fav end is not reached 
+        */
+        if (favSheet && selectedIndex && selectedIndex < data.length - 1) {
+            ++selectedIndex;
+            while (selectedIndex < data.length - 1 && data[selectedIndex].Favorite !== "checked") {
+                selectedIndex++;
+        }
+        // normal skip
+        } else if (selectedIndex < data.length - 1) {
+            ++selectedIndex;
+        }
+
+        if (selectedIndex) {
+            openDetails(data[selectedIndex]);
+        }
+    }
+
+    function goToPrevious() {
+        const data = mode.getData();
+        // skip indexes until next favorite
+        if (favSheet && selectedIndex && selectedIndex > 0) {
+            --selectedIndex;
+            while (selectedIndex > 0 && data[selectedIndex].Favorite !== "checked") {
+                selectedIndex--;
+        }
+        // normal skip
+        } else if (selectedIndex > 0) {
+            --selectedIndex;
+        }
+
+        if (selectedIndex) {
+            openDetails(data[selectedIndex]);
+        }
     }
 
     let favSheet = false;
@@ -84,7 +139,18 @@ export default function display(weeklyData) {
             case "ESCAPE":
                 toggleOverlay();
                 break;
-        }});
+            case "ARROWLEFT":
+                goToPrevious();
+                break;
+            case "ARROWRIGHT":
+                goToNext();
+                break;
+        }
+        e.stopPropagation();
+    });
+    
+    let selectedIndex = 0;
+    let selectedNode = null;
 
     class ReleaseMode {
         getData() {
@@ -185,16 +251,23 @@ export default function display(weeklyData) {
     let individualData = 
         toIndividualData(weeklyData)
         .filter(d => d.filmCount ? true : null)
-        .sort((a,b) => a.Title.localeCompare(b.Title));
+        .sort((a,b) => a.watchedDate - b.watchedDate);
+
+    // release view data
+    const titleSorted =
+        individualData.slice().sort((a,b) => a.Title.localeCompare(b.Title));
 
     let deduplicatedData = [];
-    for (let i = 0; i < individualData.length; i++) {
-        if (i == individualData.length - 1 || individualData[i].Title !== individualData[i+1].Title) {
-            deduplicatedData.push(individualData[i]);
+    for (let i = 0; i < titleSorted.length; i++) {
+        if (i == titleSorted.length - 1 || titleSorted[i].Title !== titleSorted[i+1].Title) {
+            deduplicatedData.push(titleSorted[i]);
         }
     }
 
-    deduplicatedData = releaseCount(deduplicatedData);
+    deduplicatedData = 
+        releaseCount(deduplicatedData)
+        // sort again by year to allow datewise navigation
+        .sort((a,b) => a.Year - b.Year);
 
     const margin = {top: 20, right: 20, bottom: 70 + 100 + 20, left: 40};
     const innerPaddingX = 0.30;
@@ -358,6 +431,7 @@ export default function display(weeklyData) {
 
     document.querySelector(".details__close").addEventListener("click", toggleOverlay);
 
+
     function toggleOverlay() {
         const details = d3.select(".details");
         details.classed("details--hidden", !details.classed("details--hidden"));
@@ -365,6 +439,45 @@ export default function display(weeklyData) {
 
     function openOverlay() {
         d3.select(".details").classed("details--hidden", false);
+    }
+
+    function openDetails(d, i, a) {
+        // open overlay
+        openOverlay();
+
+        highlightSelected(d);
+        
+        const timeFadeOut = 350;
+        const detailsContent = d3.select(".details__content");
+        // if not hidden, do fadeout
+        if (!d3.select(".details").classed("details--hidden")) {
+            detailsContent.classed("fading-out", true);
+            setTimeout(() => {
+                changeDetailsContent();
+                detailsContent.classed("fading-out", false)
+            }, timeFadeOut);
+        }
+
+        // fill overlay
+        function changeDetailsContent() {
+            d3.select(".details__img").attr("src", d.Poster);
+            d3.select(".details__props__title").text(d.Title);
+            d3.select(".details__props__year").text(d.Year);
+            d3.select(".details__props__facts").html(`${d.Genre}`).attr("title", d.Genre);
+            d3.select(".details__plot").text(d.Plot);
+            if (d.Comment.length) {
+                document.getElementById("movie-comment").classList.remove("hidden");
+                d3.select(".details__comment").text(d.Comment);
+            } else {
+                document.getElementById("movie-comment").classList.add("hidden");
+            }
+            d3.select(".details__links__imdb")
+                .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
+                .attr("target", "_blank");
+        }
+        if (d.Color) {
+            d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${d.Color.join(',')}), #000 90%)`);
+        }
     }
 
     setTimeout(function() {
@@ -505,11 +618,10 @@ export default function display(weeklyData) {
         //
 
         const highlightClass = "movieTile--highlighted";
-    
+        
         let barsUpdate = svg.selectAll("g")
         //.data(data)
-        // TODO check is mode dependent
-        .data(mode.getData(), d => `${d.Title}+${d.week}+${d.watchedDate ? d.watchedDate : ""}`)
+        .data(mode.getData(), keyFunction)
         console.log("Update size: ", barsUpdate.size());
         
         // remove old ones (duplicates like series when coming from watched view, or movies seen twice)
@@ -532,6 +644,8 @@ export default function display(weeklyData) {
             : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
         // merge for location updates
         .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
+        .attr("id", keyFunction)
+        .classed("movieTile--series", d => d.Type === "Series")
         // TODO: these are only used at .enter time. Should also be in update? Maybe with a d3.selectAll
         .attr("width", mode.getBandwidth())
         .attr("height", mode.getBandheight())
@@ -550,51 +664,33 @@ export default function display(weeklyData) {
         .on('mouseout', function(d) {
             this.classList.toggle(highlightClass);
         })
-        .on('click', (d) => {
-    
-            // open overlay
-            openOverlay();
-            
-            const timeFadeOut = 350;
-            const detailsContent = d3.select(".details__content");
-            // if not hidden, do fadeout
-            if (!d3.select(".details").classed("details--hidden")) {
-                detailsContent.classed("fading-out", true);
-                setTimeout(() => {
-                    changeDetailsContent();
-                    detailsContent.classed("fading-out", false)
-                }, timeFadeOut);
-            }
-    
-            // fill overlay
-            function changeDetailsContent() {
-                d3.select(".details__img").attr("src", d.Poster);
-                d3.select(".details__props__title").text(d.Title);
-                d3.select(".details__props__year").text(d.Year);
-                d3.select(".details__props__facts").html(`${d.Genre}`).attr("title", d.Genre);
-                d3.select(".details__plot").text(d.Plot);
-                if (d.Comment.length) {
-                    document.getElementById("movie-comment").classList.remove("hidden");
-                    d3.select(".details__comment").text(d.Comment);
-                } else {
-                    document.getElementById("movie-comment").classList.add("hidden");
-                }
-                d3.select(".details__links__imdb")
-                    .attr("href", `https://www.imdb.com/title/${d.imdbID}`)
-                    .attr("target", "_blank");
-            }
-            if (d.Color) {
-                d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${d.Color.join(',')}), #000 90%)`);
-            }
+        .on('click', function(d, i, a) {
+            selectedIndex = i;
+            selectedNode = d3.select(this);
+            openDetails(d, i, a);
         });
 
         gs.filter(d => d.Favorite === "checked").append("image")
             .attr("x", "-15")
             .attr("y", "-4")
-            .attr("transform", "translate(0,0)")
             .attr("width", "35").attr("height", "35")
             //.attr("class", "movieTile__favorite")
             .attr('xlink:href', flashIcon);
+
+        const xb = 6;
+        const yb = 5
+
+        // TODO: mapping series 
+        // gs.filter(d => d.Type === "Series")
+        //     .insert("rect", ":first-child")
+        //     .attr("width", mode.getBandwidth() + xb)
+        //     .attr("height", mode.getBandheight() + yb)
+        //     .attr("x", -xb/2)
+        //     .attr("y", -yb/2)
+        //     .attr("style",  d => `fill: rgb(${d.Color ? d.Color.join() : '128, 128, 128'}); filter: blur(3px)`)
+        //     //.attr("class", "movieTile__favorite")
+        //     //.attr('xlink:href', flashIcon);
+
 
         // scroll resets
         let movieCont = document.querySelector(".movies-container");

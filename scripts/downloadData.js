@@ -120,11 +120,12 @@ moviesAirtableFiltered.forEach((airMovie) => {
 // mergens old json with new airmovie (comment, favorite)
 function merge(airMovie, jsonMovie) {
     return new Promise((resolve, reject) => {
-        ({Comment, Favorite} = airMovie); // destructure
+        ({Comment, Favorite, Type} = airMovie); // destructure
         let out = {
             ...jsonMovie,
             Comment, 
-            Favorite
+            Favorite,
+            Type
         };
 
         if (alwaysColorDownload || !jsonMovie.Color) {
@@ -161,9 +162,9 @@ Promise.all(requests
         const promised = zip(moviesToRequest, apiMovies)
             // pure wizard object destructuring
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
-            .map(([{"Date": airDate, "Title": airTitle, Comment, Favorite}, omdbData]) => (
+            .map(([{"Date": airDate, "Title": airTitle, Comment, Favorite, Type}, omdbData]) => (
                 {"watchedDate": airDate, "Title": omdbData ? 
-                    omdbData.Title : airTitle, airTitle, Comment, Favorite, ...omdbData}))
+                    omdbData.Title : airTitle, airTitle, Comment, Favorite, Type, ...omdbData}))
             // TODO: debugged very long for this one... Promise.resolve has to be bound to promise...
             .map(Promise.resolve.bind(Promise));
 
