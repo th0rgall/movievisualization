@@ -465,7 +465,7 @@ export default function display(weeklyData) {
             d3.select(".details__props__year").text(d.Year);
             d3.select(".details__props__facts").html(`${d.Genre}`).attr("title", d.Genre);
             d3.select(".details__plot").text(d.Plot);
-            if (d.Comment.length) {
+            if (d.Comment && d.Comment.length) {
                 document.getElementById("movie-comment").classList.remove("hidden");
                 d3.select(".details__comment").text(d.Comment);
             } else {
@@ -656,7 +656,8 @@ export default function display(weeklyData) {
             let ttoffsety = -100;
             this.classList.toggle(highlightClass);
     
-            tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.week)}\n${d.Title}`)
+            // tooltip.html(`${d3.timeFormat("%Y-%b-%e")(d.watchedDate)}\n${d.Title}`)
+            tooltip.html(d.Title)
             .style("visibility", "visible")
             .style("top", d3.mouse(document.querySelector('body'))[1] + ttoffsety + "px")
             .style("left", d3.mouse(document.querySelector('body'))[0] + ttoffsetx + "px");

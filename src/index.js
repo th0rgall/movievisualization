@@ -3,7 +3,19 @@ import * as d3 from 'd3';
 import display from './display.js';
 
 function weeklyData(data) {
-    let weeks = d3.timeWeeks.apply(this, d3.extent(data.map(m => m.watchedDate)));
+    // shift one week
+    const shiftDays = days => (d => d.setDate(d.getDate() + days));
+    const shiftWeek = shiftDays(7);
+    // extent with last week exclusive and weeks starting from monday
+    // TODO DEBUG JOURNAL: de extent geeft echt de laatste date objects *by reference*
+    // dus als ik die shift, dan shift ik de eerste / laatste dates van de films zelf...
+    let extent = d3.extent(data.map(m => m.watchedDate)).map(d => new Date(d));
+    // shift one week to get monday --> sunday evening
+    extent.forEach(shiftWeek);
+    // shift last one extra to compensate for exclusive end
+    // shiftDays(8)(extent[1]);
+
+    let weeks = d3.timeWeeks.apply(this, extent);
     
     let di = 0; // data index
     let weeklyData = weeks.reduce((acc, cur, i, arr) => {
