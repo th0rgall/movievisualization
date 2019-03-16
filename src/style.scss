@@ -186,6 +186,9 @@ body {
       &__options {
         margin-left: 4px !important;
         margin-right: 20px;
+        & > * {
+          display: inline-block !important;
+        }
       }
     }
 
@@ -343,6 +346,11 @@ body {
 
     &__options {
       margin-left: 20px;
+      .block {
+        display: block;
+        width: -moz-fit-content;
+        width: -webkit-fit-content;
+      }
     }
 
     &__option.active {

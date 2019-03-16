@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import imdbLogo from './imdb_logo.png'; 
 import flashIcon from './flash.svg';
+import screenfull from 'screenfull';
 
 const ColorThief = require('color-thief');
 const colorThief = new ColorThief();
@@ -370,12 +371,20 @@ export default function display(weeklyData) {
             |
             <span class="controls__option" id="control-viewmode-watched" >watched date</span>
         </div>
-        <span class="controls__title"><strong>filters</strong></span>
+        <span class="controls__title"><strong>actions</strong></span>
         <div class="controls__options">
-            <span class="controls__option" id="control-favorites">show favorites only</span>
+            <span class="controls__option block" id="control-favorites">show favorites only</span>
+            <span class="controls__option block" id="fullscreen-toggle">go fullscreen</span>
         </div>
-        <span class="controls__title"><strong><a style="text-decoration: none; color: #fff;" href="https://airtable.com/shr9VA8GxYb77zw4U" target="_blank">recommend me something 🍿 →</a></strong><span>
+        <span class="controls__title"><strong><a style="text-decoration: none; color: #fff;" href="https://airtable.com/shr9VA8GxYb77zw4U" target="_blank">tell me what to watch 🍿</a></strong></span>
     `);
+
+    document.getElementById("fullscreen-toggle").addEventListener("click", (event) => {
+        if (screenfull.enabled) {
+            screenfull.toggle();
+            event.target.classList.toggle("active");
+        }
+    })
 
     document.getElementById("control-favorites").addEventListener("click", toggleFavorites);
     document.getElementById("control-viewmodes").addEventListener("click", (e) => {
