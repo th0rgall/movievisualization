@@ -72,13 +72,13 @@ export default function display(weeklyData) {
 
     // TODO check is mode dependent
     // used as css ID selector too, so can't have whitespace or other illegal
-    let keyFunction = d => `${d.Title.slice(0, 7).replace(/\s+|[\.\/>',]/g,"")}-${d.watchedDate ? d.watchedDate.getTime() : ""}`;
+    let keyFunction = d => `${d.Title.slice(0, 7).replace(/\s+|[\.\/>',:é]/g,"")}-${d.watchedDate ? d.watchedDate.getTime() : ""}`;
 
     function highlightSelected(d) {
         const selectedClass = "movieTile--selected";
         // dehighlight previous
         selectedNode ? selectedNode.classed(selectedClass, false) : null;
-        // highligh next
+        // highlight next
         selectedNode = d3.select("#" + keyFunction(d));
         selectedNode ? selectedNode.classed("movieTile--selected", true) : null;
     }
@@ -102,7 +102,7 @@ export default function display(weeklyData) {
         }
 
         if (selectedIndex) {
-            openDetails(data[selectedIndex]);
+            openDetails(data[selectedIndex], selectedIndex);
         }
     }
 
@@ -120,7 +120,7 @@ export default function display(weeklyData) {
         }
 
         if (selectedIndex) {
-            openDetails(data[selectedIndex]);
+            openDetails(data[selectedIndex], selectedIndex);
         }
     }
 
@@ -387,10 +387,16 @@ export default function display(weeklyData) {
         }
     });
 
+    function resetSelected() {
+        selectedNode = null;
+        selectedIndex = null;
+    }
+
     function setReleaseMode() {
         mode = mode instanceof ReleaseMode ? mode : new ReleaseMode();
         document.getElementById("control-viewmode-release").classList.add("active");
         document.getElementById("control-viewmode-watched").classList.remove("active");
+        resetSelected()
         render();
     }
 
@@ -398,6 +404,7 @@ export default function display(weeklyData) {
         mode = mode instanceof WatchedMode ? mode : new WatchedMode();
         document.getElementById("control-viewmode-watched").classList.add("active");
         document.getElementById("control-viewmode-release").classList.remove("active");
+        resetSelected();
         render();
     }
 
@@ -437,6 +444,10 @@ export default function display(weeklyData) {
     function toggleOverlay() {
         const details = d3.select(".details");
         details.classed("details--hidden", !details.classed("details--hidden"));
+
+        if (!details.classed("details--hidden")) {
+            resetSelected();
+        }
     }
 
     function openOverlay() {
@@ -469,7 +480,7 @@ export default function display(weeklyData) {
     function openDetails(d, i, a) {
         // open overlay
         openOverlay();
-
+        selectedIndex = i ? i : selectedIndex;
         highlightSelected(d);
         
         const timeFadeOut = 350;
@@ -658,6 +669,29 @@ export default function display(weeklyData) {
         let gs = bars.append("g");
         let mergers = gs.merge(barsUpdate)
         .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getInitialY()})`);
+       
+        // reset click handlers
+        /*
+            TODO learning journal:
+            indices passed to d3 events seem to be static from when you bind them
+            thus on("click", function (d,i,a) => ) is not "dynamic" & won't always give the its i of the latest data
+            if the data key itself has not changed, it remembers the i from the first enter data
+            might be transformed to addEventListener("click", function(event) => onClickHandler(d,i,a)) 
+            with that function not being replaced
+
+            indeed: tested. If the below segment is removed (reset)
+            and you inspect the .on("click") below, then when changing the view,
+            the d given will be correct. But the i will still be the one from releaseView (releasemode.getData()[i] === d)
+
+            illustrate in a d3 bug: make a very simple setup that explains it
+        */
+        mergers
+        .select("image,rect") // jump one level down
+        .on('click', function(d, i, a) {
+            openDetails(d, i, a);
+        });
+
+        // transition groups
         mergers
         .transition()
         .duration(2000)
@@ -691,8 +725,6 @@ export default function display(weeklyData) {
             this.classList.toggle(highlightClass);
         })
         .on('click', function(d, i, a) {
-            selectedIndex = i;
-            selectedNode = d3.select(this);
             openDetails(d, i, a);
         });
 
