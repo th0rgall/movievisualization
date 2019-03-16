@@ -349,6 +349,7 @@ export default function display(weeklyData) {
     var monthAxisRelease = d3.axisBottom(xRelease);
     monthAxisRelease.tickFormat(d => "'" + String(d).slice(2));
     //console.log(xRelease.domain());
+    monthAxisRelease.tickValues(xRelease.domain().filter(d => d % 5 == 0 && d & 10 !== 0));
 
     // y axis for watched view
     var yAxis = d3.axisLeft(y);
@@ -404,7 +405,8 @@ export default function display(weeklyData) {
     //
     //
 
-    var details = d3.select("body").append("div").attr("class", "details side details--hidden").html(`
+    var details = d3.select("body").append("div")
+    .attr("class", "details side details--hidden").html(`
         <div class="details__content">
             <div class="details__close">
                 <svg enable-background="new 0 0 100 100" version="1.1" viewBox="0 0 100 125" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"><polygon points="82.2 11.5 49.7 44 17.2 11.5 10.8 17.8 43.3 50.3 10.8 82.8 17.2 89.2 49.7 56.7 82.2 89.2 88.5 82.8 56 50.3 88.5 17.8"/></svg>
@@ -441,6 +443,29 @@ export default function display(weeklyData) {
         d3.select(".details").classed("details--hidden", false);
     }
 
+    // initial detail position
+    details.node().style.right = "20px";
+    details.node().style.top = "80px";
+
+    // bind details dragging
+    var isMoving = false;
+    //const details = document.querySelector(".details");
+    details.on("mousedown", (mE) => isMoving = true);
+    details.on("mouseup", (mE) => isMoving = false);
+    document.addEventListener("mousemove", (mE) => {
+        if (isMoving) {
+            const getNumber = str => {
+                const match = /(\d{1,5})(px)?/.exec(str);
+                return match ? +match[1] : 0;
+            }
+            const toString = n => String(n) + "px";
+            const top = getNumber(details.node().style.top);
+            const right = getNumber(details.node().style.right);
+            details.node().style.top = toString(top + mE.movementY);
+            details.node().style.right = toString(right - mE.movementX);
+        }
+    });
+
     function openDetails(d, i, a) {
         // open overlay
         openOverlay();
@@ -476,7 +501,7 @@ export default function display(weeklyData) {
                 .attr("target", "_blank");
         }
         if (d.Color) {
-            d3.select(".details").attr("style", `background: radial-gradient(at 10% 10%, rgb(${d.Color.join(',')}), #000 90%)`);
+            d3.select(".details").style("background", `radial-gradient(at 10% 10%, rgb(${d.Color.join(',')}), #000 90%)`);
         }
     }
 

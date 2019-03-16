@@ -15,6 +15,7 @@ html {
 
 $dimmed: #D8D8D8;
 $background: #1D1E1F; 
+$darkred: #6C0000; 
 
 body {
     font-family: 'Helvetica Neue', 'Helvetica-Neue', 'Helvetica';
@@ -39,6 +40,7 @@ body {
     border: 1px solid $dimmed;
     background-color: #000;
     padding: $details-padding;
+    z-index: 1; // to prevent tooltips from going over
 
     &__close {
       position: absolute;
@@ -153,14 +155,10 @@ body {
         }
       }
     }
-
-
   }
 
   .side {
     position: fixed;
-    right: 20px;
-    top: 80px;
     height: 520px;
     width: 360px;
   }
@@ -186,7 +184,7 @@ body {
   .axis .axis__year-ticks {
     font-size: 100px;
     font-weight: 600;
-    fill: #6C0000;
+    fill: $darkred;
   }
 
   .axis .axis__month-ticks {
@@ -228,12 +226,13 @@ body {
     font: 15px sans-serif;
     background: #222;
     color: #fff;
-    border: 0px;
-    border-radius: 8px;
+    border: 1px solid #fff;
+    //border-radius: 8px;
     pointer-events: none;
     opacity: 0.9;
     visibility: hidden;
-    width: 200px;
+    //width: 200px;
+    transition: all 0.3s;
   }
 
   .axis-container, .movies-container {
