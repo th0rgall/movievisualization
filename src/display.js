@@ -331,7 +331,8 @@ export default function display(weeklyData) {
 
     // yearAxis for release view
     var yearAxisRelease = d3.axisBottom(xRelease);
-    yearAxisRelease.tickValues(xRelease.domain().filter((d,i,a) => d % 10 == 0));
+    // yearAxisRelease.tickValues(xRelease.domain().filter((d,i,a) => d % 10 == 0));
+    yearAxisRelease.tickValues(xRelease.domain().filter(d => false));
 
     // monthAxis for watched view
     var monthAxis = d3.axisBottom(x);
@@ -347,9 +348,10 @@ export default function display(weeklyData) {
     
     // month for release view
     var monthAxisRelease = d3.axisBottom(xRelease);
-    monthAxisRelease.tickFormat(d => "'" + String(d).slice(2));
+    //monthAxisRelease.tickFormat(d => "'" + String(d).slice(2));
     //console.log(xRelease.domain());
-    monthAxisRelease.tickValues(xRelease.domain().filter(d => d % 5 == 0 && d & 10 !== 0));
+    //monthAxisRelease.tickValues(xRelease.domain().filter(d => d % 5 == 0 && d & 10 !== 0));
+    monthAxisRelease.tickFormat(d => (d % 5 == 0) ? d : "");
 
     // y axis for watched view
     var yAxis = d3.axisLeft(y);
@@ -372,6 +374,7 @@ export default function display(weeklyData) {
         <div class="controls__options">
             <span class="controls__option" id="control-favorites">show favorites only</span>
         </div>
+        <span class="controls__title"><strong><a style="text-decoration: none; color: #fff;" href="https://airtable.com/shr9VA8GxYb77zw4U" target="_blank">recommend me something 🍿 →</a></strong><span>
     `);
 
     document.getElementById("control-favorites").addEventListener("click", toggleFavorites);
@@ -430,11 +433,11 @@ export default function display(weeklyData) {
                 <h3 class="details__text-title">Plot</h3>
                 <p class="details__plot"></p>
                 <div id="movie-comment">
-                    <h3 class="details__text-title">Comment</h3>
+                    <h3 class="details__text-title">Comment</h3> <i>by Thor</i>
                     <p class="details__comment"></p>
                 </div>
-                <a class="details__links details__links__imdb">More on <img src="${imdbLogo}"/></a>
             </div>
+            <a class="details__links details__links__imdb">More on <img src="${imdbLogo}"/></a>
         </div>
     `);
 
@@ -516,13 +519,22 @@ export default function display(weeklyData) {
         }
     }
 
+    function scrollTopMax(el) {
+        // client or offset? probably client --> scrollbars should not be calculated in
+        return el.scrollHeight - el.clientHeight;
+    }
+
+    function scrollLeftMax(el) {
+        return el.scrollWidth - el.clientWidth;
+    }
+
     setTimeout(function() {
         // https://stackoverflow.com/questions/9236314/how-do-i-synchronize-the-scroll-position-of-two-divs
         var isSyncingLeftScroll = false;
         var isSyncingRightScroll = false;
         var leftDiv = document.querySelector(".axis-container");
         var rightDiv = document.querySelector('.movies-container');
-        rightDiv.scrollTop = rightDiv.scrollTopMax;
+        rightDiv.scrollTop = scrollTopMax(rightDiv);
         
         
         leftDiv.onscroll = function() {
@@ -540,7 +552,7 @@ export default function display(weeklyData) {
         }
         isSyncingRightScroll = false;
         }
-    }, 300);
+    }, 600);
 
     const containers = ["movies-container", "axis-container"];
 
@@ -601,7 +613,7 @@ export default function display(weeklyData) {
         let botsvg = botdiv.append("svg");
         let yearTicks = botsvg
             .attr("width", mode.getWidth() + margin.left + margin.right)
-            .attr("height", 150)
+            .attr("height", 105) // to prevent a weird bug, -5 pixels
         .append("g")
         .attr("transform", "translate(" + margin.left + ", 0)");
         
@@ -613,7 +625,7 @@ export default function display(weeklyData) {
         .attr("class", "axis__year-ticks")
         .style("text-anchor", "start")
         .attr("dx", "-60")
-        .attr("dy", "100")
+        .attr("dy", "90")
         .attr("fill", textColor)
         //.attr("transform", "rotate(-90)" );
     
@@ -630,7 +642,7 @@ export default function display(weeklyData) {
         .attr("class", "axis__month-ticks")
         .style("text-anchor", "start")
         .attr("dx", "-23")
-        .attr("dy", "65")
+        .attr("dy", "60")
         .attr("fill", textColor)
         //.attr("transform", "rotate(-90)" );
     
@@ -753,10 +765,10 @@ export default function display(weeklyData) {
         // scroll resets
         let movieCont = document.querySelector(".movies-container");
         if (mode instanceof ReleaseMode) {
-            movieCont.scrollTop = movieCont.scrollTopMax;
-            movieCont.scrollLeft = movieCont.scrollLeftMax;
+            movieCont.scrollTop = scrollTopMax(movieCont);
+            movieCont.scrollLeft = scrollLeftMax(movieCont);
         } else if (mode instanceof WatchedMode) {
-            movieCont.scrollLeft = movieCont.scrollLeftMax;
+            movieCont.scrollLeft = scrollLeftMax(movieCont);
         }
     }
 }
