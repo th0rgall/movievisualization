@@ -361,14 +361,14 @@ export default function display(weeklyData) {
     //
     // 
 
-    var controls = d3.select("body").append("div").attr("class","controls").html(`
-        <span class="controls__title">view by</span>
+    var controls = d3.select("body").append("div").attr("class","controls card").html(`
+        <span class="controls__title"><strong>view by</strong></span>
         <div class="controls__options" id="control-viewmodes">
             <span class="controls__option" id="control-viewmode-release">release date</span>
             |
             <span class="controls__option" id="control-viewmode-watched" >watched date</span>
         </div>
-        <span class="controls__title">filters</span>
+        <span class="controls__title"><strong>filters</strong></span>
         <div class="controls__options">
             <span class="controls__option" id="control-favorites">show favorites only</span>
         </div>
@@ -406,7 +406,7 @@ export default function display(weeklyData) {
     //
 
     var details = d3.select("body").append("div")
-    .attr("class", "details side details--hidden").html(`
+    .attr("class", "details side card details--hidden").html(`
         <div class="details__content">
             <div class="details__close">
                 <svg enable-background="new 0 0 100 100" version="1.1" viewBox="0 0 100 125" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"><polygon points="82.2 11.5 49.7 44 17.2 11.5 10.8 17.8 43.3 50.3 10.8 82.8 17.2 89.2 49.7 56.7 82.2 89.2 88.5 82.8 56 50.3 88.5 17.8"/></svg>

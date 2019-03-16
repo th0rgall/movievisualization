@@ -1,5 +1,8 @@
 html {
   height: 100%;
+}
+
+* {
   box-sizing: border-box;
 }
 
@@ -36,10 +39,15 @@ body {
 
   $details-padding: 25px;
 
+  .card {
+    border: 1px solid $dimmed;
+    background-color: #000c;
+    padding: $details-padding;
+  }
+
   .details {
     border: 1px solid $dimmed;
     background-color: #000;
-    padding: $details-padding;
     z-index: 1; // to prevent tooltips from going over
 
     &__close {
@@ -157,10 +165,37 @@ body {
     }
   }
 
+  @media screen and (max-width: 550px) {
+    .details {
+      top: 0 !important;
+      right: 0 !important;
+      width: 90% !important;
+      height: 90% !important;
+      margin: 5%;
+    }
+
+    .controls {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      overflow: scroll;
+      white-space: nowrap;
+
+      &__options {
+        margin-left: 4px !important;
+        margin-right: 20px;
+      }
+    }
+
+    .controls > * {
+      display: inline-block !important;
+    }
+  }
+
   .side {
     position: fixed;
-    height: 520px;
-    width: 360px;
+    height: 520px + $details-padding * 2;
+    width: 360px + $details-padding * 2;
   }
   
   .chart {
@@ -290,10 +325,14 @@ body {
     left: 40px;
     top: 40px;
     line-height: 1.4rem;
+    padding: 10px !important;
 
     color: #fff;
     font-size: 1rem;
 
+    border: 1px solid #474747;
+    background-color: #1D1E1FE6;
+  
     &__title:not(:first-child) {
       margin-top: .3em;
       display: block;
