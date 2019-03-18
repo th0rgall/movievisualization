@@ -193,11 +193,16 @@ Promise.all(requests
         const promised = zip(moviesToRequest, apiMovies)
             // pure wizard object destructuring
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
-            .map(([{"Date": airDate, "Title": airTitle, Comment, Favorite, Type}, omdbData]) => (
-                {"watchedDate": airDate, "Title": omdbData ? 
-                    omdbData.Title : airTitle, airTitle, Comment, Favorite, Type, ...omdbData}))
+            .map((zipped) => 
+                {
+                    const [{"Date": airDate, "Title": airTitle, Comment, Favorite, Type}, omdbData] = zipped;
+                    let film = ({"watchedDate": airDate, "Title": omdbData ? 
+                            omdbData.Title : airTitle, airTitle, Comment, Favorite, Type, ...omdbData});
+                    return merge(zipped[0], film);
+                    }
+                )
             // TODO: debugged very long for this one... Promise.resolve has to be bound to promise...
-            .map(Promise.resolve.bind(Promise));
+            //.map(Promise.resolve.bind(Promise));
 
         Promise.all([...newMovies, ...promised].map(safePromiseWrapper)).then(
             (finalMovies) => {

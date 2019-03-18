@@ -515,7 +515,8 @@ export default function display(weeklyData) {
             d3.select(".details__plot").text(d.Plot);
             if (d.Comment && d.Comment.length) {
                 document.getElementById("movie-comment").classList.remove("hidden");
-                d3.select(".details__comment").text(d.Comment);
+                d3.select(".details__comment").html(d.Comment); // <-- potential script/html injection vulerability
+                                                                // TODO: enable only safe tags
             } else {
                 document.getElementById("movie-comment").classList.add("hidden");
             }
