@@ -190,6 +190,10 @@ body {
           display: inline-block !important;
         }
       }
+
+      ##{control}-favorites::after {
+        content: " |"
+      }
     }
 
     .controls > * {
