@@ -48,6 +48,10 @@ export default function display(weeklyData) {
         return out;
     }
 
+    function isFavorite(d) {
+        return d.Favorite === "checked" || d.Favorite === true || d.Favorite === "true";
+    }
+
     function toggleFavorites(e) {
         if (!favSheet) {
             var sheet = document.createElement('style');
@@ -91,7 +95,7 @@ export default function display(weeklyData) {
         */
         if (favSheet && selectedIndex && selectedIndex < data.length - 1) {
             ++selectedIndex;
-            while (selectedIndex < data.length - 1 && data[selectedIndex].Favorite !== "checked") {
+            while (selectedIndex < data.length - 1 && !isFavorite(data[selectedIndex])) {
                 selectedIndex++;
         }
         // normal skip
@@ -109,7 +113,7 @@ export default function display(weeklyData) {
         // skip indexes until next favorite
         if (favSheet && selectedIndex && selectedIndex > 0) {
             --selectedIndex;
-            while (selectedIndex > 0 && data[selectedIndex].Favorite !== "checked") {
+            while (selectedIndex > 0 && !isFavorite(data[selectedIndex])) {
                 selectedIndex--;
         }
         // normal skip
@@ -723,7 +727,7 @@ export default function display(weeklyData) {
         gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
             : document.createElementNS('http://www.w3.org/2000/svg', "rect"))
         // merge for location updates
-        .attr("class", (d) => "movieTile" + (d.Favorite == "checked" ? " favorite" : ""))
+        .attr("class", (d) => "movieTile" + (isFavorite(d) ? " favorite" : ""))
         .attr("id", keyFunction)
         .classed("movieTile--series", d => d.Type === "Series")
         // TODO: these are only used at .enter time. Should also be in update? Maybe with a d3.selectAll
@@ -760,7 +764,7 @@ export default function display(weeklyData) {
             openDetails(d, i, a);
         });
 
-        gs.filter(d => d.Favorite === "checked").append("image")
+        gs.filter(isFavorite).append("image")
             .attr("x", "-15")
             .attr("y", "-4")
             .attr("width", "35").attr("height", "35")
