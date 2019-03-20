@@ -716,6 +716,8 @@ export default function display(weeklyData) {
         .duration(2000)
         // + 1 because it seeems offf
         .attr("transform", d => `translate(${mode.getX(d)}, ${mode.getY(d)})`);
+
+        let tooltipTimeout = null;
             
         // enter for creation
         gs.append(d => d.Poster && d.Poster.match(/https?/) ? document.createElementNS('http://www.w3.org/2000/svg', "image") 
@@ -739,9 +741,20 @@ export default function display(weeklyData) {
             .style("visibility", "visible")
             .style("top", d3.mouse(document.querySelector('body'))[1] + ttoffsety + "px")
             .style("left", d3.mouse(document.querySelector('body'))[0] + ttoffsetx + "px");
+            // cancel pending tooltip hiding
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+            // show tooltip again
+            tooltip.classed("tooltip--hidden", false);
         })
         .on('mouseout', function(d) {
             this.classList.toggle(highlightClass);
+            // hide tooltip
+            tooltipTimeout = setTimeout(() => {
+                tooltip.classed("tooltip--hidden", true);
+            }, 600);
         })
         .on('click', function(d, i, a) {
             openDetails(d, i, a);

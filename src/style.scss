@@ -150,9 +150,9 @@ body {
       margin: 0.5em 0;
     }
 
-    &__comment {
-      overflow: scroll;
-    }
+    // &__comment {       // TODO: scrollbar hiding hotfix
+    //   overflow: scroll;
+    // }
 
     &__links {
       display: block;
@@ -287,6 +287,11 @@ body {
     visibility: hidden;
     //width: 200px;
     transition: all 0.3s;
+
+    &--hidden {
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
   }
 
   .axis-container, .movies-container {
