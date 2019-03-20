@@ -825,12 +825,6 @@ camelcase@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-5.0.0.tgz#03295527d58bd3cd4aa75363f35b2e8d97be2f42"
 
-canvas@~1.6.11:
-  version "1.6.13"
-  resolved "https://registry.yarnpkg.com/canvas/-/canvas-1.6.13.tgz#8cb4e9abbea9e615a377890ffac50277a1167c73"
-  dependencies:
-    nan "^2.10.0"
-
 caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
@@ -949,12 +943,6 @@ color-thief-jimp@^2.0.2:
   resolved "https://registry.yarnpkg.com/color-thief-jimp/-/color-thief-jimp-2.0.2.tgz#2951db67cb2c227254f3bee669c562d7534d43ea"
   dependencies:
     jimp "^0.2.21"
-
-color-thief@^2.2.3:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/color-thief/-/color-thief-2.2.3.tgz#7d8e3c1ff6c9e773b00ebbec589e4e086232337d"
-  dependencies:
-    canvas "~1.6.11"
 
 combined-stream@^1.0.6, combined-stream@~1.0.6:
   version "1.0.7"

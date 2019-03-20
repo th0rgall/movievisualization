@@ -3,9 +3,6 @@ import imdbLogo from './imdb_logo.png';
 import flashIcon from './flash.svg';
 import screenfull from 'screenfull';
 
-const ColorThief = require('color-thief');
-const colorThief = new ColorThief();
-
 export default function display(weeklyData) {
 
     // STATIC CODE
