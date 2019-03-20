@@ -45,10 +45,20 @@ body {
     padding: $details-padding;
   }
 
+
+
   .details {
     border: 1px solid $dimmed;
     background-color: #000;
     z-index: 1; // to prevent tooltips from going over
+
+    // HIDE SCROLLBARS
+    &__props, &__bottom {
+      scrollbar-width: none; // for moz, temp fix temp fix for ugly horizontal scrollbars on Windows
+      &::-webkit-scrollbar { // for webkit, 
+        display: none; 
+      }
+    }
 
     &__close {
       position: absolute;
@@ -95,7 +105,7 @@ body {
       color: #fff;
       margin: 0 0 0 $element-margin;
       max-height: 210px;
-      overflow: scroll;
+      overflow-y: scroll;
 
       &__title {
         font-weight: 400;
@@ -110,7 +120,7 @@ body {
 
       &__facts {
         text-overflow: ellipsis;
-        white-space: nowrap;
+        //white-space: nowrap; // TODO temp fix: re-introduce when more info is there
         display: block;
         overflow: hidden;
       }
