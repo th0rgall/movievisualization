@@ -208,9 +208,9 @@ Promise.all(requests
             (finalMovies) => {
                 fs.writeFile(defaultOut, JSON.stringify(finalMovies), {encoding: 'utf8'}, 
                     err => console.log(err ? err : 
-                        `omdb data downloaded for ${countB} new movies. ${countA} not found.`
-                        +`${updateCount} comments/favs updated.`
-                        +`Probably ${oldMovies.length - finalMovies.length} movies deleted.`)
+                        `New: omdb data downloaded for ${countB} new movies. ${countA} not found.\n`
+                        + `Update: Tried to update ${updateCount} movies.\n`
+                        +`Probably ${Math.abs(oldMovies.length - finalMovies.length)} movies ${oldMovies.length > finalMovies.length ? 'deleted' : 'added'}.`)
                 );
             }
         );
