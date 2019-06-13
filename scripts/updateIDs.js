@@ -8,6 +8,8 @@ let airrecords = [];
 var Airtable = require('airtable');
 var base = new Airtable({apiKey: creds.airtableKey}).base(creds.airtableBase);
 
+let retrieved = 0;
+
 base(creds.airtableBaseName).select({
     // Selecting the first 3 records in Grid view:
     // maxRecords: 3,
@@ -16,7 +18,7 @@ base(creds.airtableBaseName).select({
     // This function (`page`) will get called for each page of records.
 
     records.forEach(function(record) {
-        console.log('Retrieved', record.get('Title'));
+        retrieved++;
         airrecords.push({
             title: record.get('Title'), 
             id: record.getId(),
@@ -30,6 +32,7 @@ base(creds.airtableBaseName).select({
 
 }, function done(err) {
     if (err) { console.error(err); return; } else {
+        console.log(`Retrieved ${retrieved} records for auto ID updating`);
         updateIDs();
     }
 });

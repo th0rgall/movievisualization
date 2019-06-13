@@ -22,7 +22,7 @@ const airtableFetcher = new Promise((resolve,reject) => {
     }).eachPage(function page(records, fetchNextPage) {
         // This function (`page`) will get called for each page of records.
         records.forEach(function(record) {
-            console.log('Fetched', record.get('Title'));
+            // console.log('Fetched', record.get('Title'));
             airrecords.push(record.fields);
         });
         // To fetch the next page of records, call `fetchNextPage`.
@@ -93,16 +93,20 @@ const defaultPath = 'data/movies-airtable.json';
 const defaultOut = 'dist/movies.json';
 
 // read airtable movies
-let fpath = '';
+let fpath, opath = '';
 if (process.argv.length > 2) {
     fpath = path.resolve(process.argv[2]);
 }
+
+if (process.argv.length > 3) {
+    opath = path.resolve(process.argv[3]);
+} 
 let moviesFile = fs.readFileSync(fpath ? fpath : defaultPath, 'utf8');
 //const moviesAirtable = JSON.parse(moviesFile);
 const moviesAirtable = await airtableFetcher;
 
 // read previous movies
-let oldMovies = JSON.parse(fs.readFileSync('dist/movies.json', 'utf8'));
+let oldMovies = JSON.parse(fs.readFileSync(opath ? opath : defaultOut, 'utf8'));
 
 const moviesAirtableFiltered = moviesAirtable.filter(e => 
     e.Title && 
@@ -116,6 +120,8 @@ const moviesToRequest = [];
 // promises for existing json movies
 let newMovies = [];
 let updateCount = 0;
+
+let logMovieTitle = (movie) => (!!movie.airTitle ? movie.airTitle : (!!movie.Title ? movie.Title : null ));
 
 moviesAirtableFiltered.forEach((airMovie) => {
     // inefficient matching of airMovien and jsonMovie based on their original Title
@@ -136,14 +142,16 @@ moviesAirtableFiltered.forEach((airMovie) => {
             || (alwaysColorDownload || !foundMovie.Color) // no color available // will try again every time even without image
             // TODO: type might also change
         ) {
+            console.log(`Updated: ${logMovieTitle(airMovie)}`);
             newMovies.push(merge(airMovie, foundMovie));
             updateCount++;
         } else {
-            // else: assume all is OK
+            // else: unchanged, assume all is OK
             newMovies.push(Promise.resolve(foundMovie));
         }
     // not found: either new, or title mismatch (temporary problem, airTitle's should be there from 2nd run)
     } else {
+        console.log(`Added new probably: ${logMovieTitle(airMovie)}`);
         moviesToRequest.push(airMovie);
     }
 });
@@ -206,7 +214,7 @@ Promise.all(requests
 
         Promise.all([...newMovies, ...promised].map(safePromiseWrapper)).then(
             (finalMovies) => {
-                fs.writeFile(defaultOut, JSON.stringify(finalMovies), {encoding: 'utf8'}, 
+                fs.writeFile(opath? opath : defaultOut, JSON.stringify(finalMovies), {encoding: 'utf8'}, 
                     err => console.log(err ? err : 
                         `New: omdb data downloaded for ${countB} new movies. ${countA} not found.\n`
                         + `Update: Tried to update ${updateCount} movies.\n`
