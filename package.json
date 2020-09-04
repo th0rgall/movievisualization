@@ -22,7 +22,7 @@
     "style-loader": "^0.23.1"
   },
   "devDependencies": {
-    "airtable": "^0.5.8",
+    "airtable": "^0.7.2",
     "color-thief-jimp": "^2.0.2",
     "jimp": "^0.6.0",
     "lodash.zip": "^4.2.0",
